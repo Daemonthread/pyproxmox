@@ -28,10 +28,12 @@ With the exception of the RRD methods all return unformatted JSON data.
 Not yet fully implemented, adding more methods as I have time.
 
 CLUSTER GET METHODS
+
 getClusterStatus()
 getClusterBackupSchedule()
 
 NODE GET METHODS
+
 getNodeNetworks(node)
 getNodeInterface(node,interface)
 getNodeContainerIndex(node)
