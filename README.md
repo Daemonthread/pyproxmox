@@ -120,6 +120,9 @@ mountOpenvzPrivate(node,vmid)
 shutdownOpenvzContainer(node,vmid)
 
 startOpenvzContainer(node,vmid)
+
 stopOpenvzContainer(node,vmid)
+
 unmountOpenvzPrivate(node,vmid)
+
 migrateOpenvzContainer(node,vmid,target)
