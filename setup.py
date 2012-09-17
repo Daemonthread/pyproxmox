@@ -2,12 +2,12 @@ from distutils.core import setup
 
 setup(
 	name = 'pyproxmox',
-	packages = ['pyproxmox'],
+	packages = ['pyproxmox.py'],
 	version = '0.9.1',
 	description = 'Python Wrapper for the Proxmox 2.x API',
 	author = 'Toby Sears',
 	author_email = 'admin@tobysears.co.uk',
-	url = 'http://pypi.python.org/pypi/pyproxmox',
+	url = 'https://github.com/Daemonthread/pyproxmox',
 	download_url = 'http://pypi.python.org/pypi/pyproxmox',
 	keywords = ['proxmox','api'],
 	classifiers = [
