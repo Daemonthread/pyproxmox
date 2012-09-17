@@ -3,6 +3,10 @@ pyproxmox
 
 A Python wrapper for the Proxmox 2.x API
 
+Installation using pip
+
+sudo pip install pyproxmox
+
 Example usage:
 
 1) from pyproxmox import *
