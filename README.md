@@ -27,11 +27,11 @@ Current List of Methods:
 With the exception of the RRD methods all return unformatted JSON data.
 Not yet fully implemented, adding more methods as I have time.
 
-# CLUSTER GET METHODS
+CLUSTER GET METHODS
 getClusterStatus()
 getClusterBackupSchedule()
 
-# NODE GET METHODS
+NODE GET METHODS
 getNodeNetworks(node)
 getNodeInterface(node,interface)
 getNodeContainerIndex(node)
@@ -49,7 +49,7 @@ getNodeTaskByUPID(node,upid)
 getNodeTaskLogByUPID(node,upid)
 getNodeTaskStatusByUPID(node,upid)
 
-# OPENVZ GET METHODS
+OPENVZ GET METHODS
 
 getContainerIndex(node,vmid)
 getContainerStatus(node,vmid)
@@ -59,7 +59,7 @@ getContainerInitLog(node,vmid)
 getContainerRRD(node,vmid)
 getContainerRRDData(node,vmid)
 
-# KVM GET METHODS
+KVM GET METHODS
 
 getVirtualIndex(node,vmid)
 getVirtualStatus(node,vmid)
@@ -69,7 +69,7 @@ getVirtualInitLog(node,vmid)
 getVirtualRRD(node,vmid)
 getVirtualRRDData(,node,vmid)
 
-# STORAGE GET METHODS
+STORAGE GET METHODS
 
 getStorageVolumeData(node,storage,volume)
 getStorageConfig(storage)   
@@ -77,7 +77,7 @@ getNodeStorageContent(node,storage)
 getNodeStorageRRD(node,storage)
 getNodeStorageRRDData(node,storage)
 
-# OPENVZ POST METHODS
+OPENVZ POST METHODS
 createOpenvzContainer(node,vmid,template,cpus,description,disk,hostname,memory,password,swap)
 mountOpenvzPrivate(node,vmid)
 shutdownOpenvzContainer(node,vmid)
