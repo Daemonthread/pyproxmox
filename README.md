@@ -9,7 +9,8 @@ sudo pip install pyproxmox
 
 ###### Example usage:
 
-1. 
+1. Import everything from the module:
+
 		from pyproxmox import *
 
 2. Create an instance of the prox_auth class by passing in the
