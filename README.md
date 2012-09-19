@@ -5,7 +5,7 @@ pyproxmox
 
 ###### Installation using pip
 
-		sudo pip install pyproxmox
+	sudo pip install pyproxmox
 
 ###### Example usage:
 
@@ -14,7 +14,7 @@ pyproxmox
 		from pyproxmox import *
 
 2. Create an instance of the prox_auth class by passing in the
-url or ip of a server, username and password:
+url or ip of a server in the cluster, username and password:
 
 		a = prox_auth('vnode01.example.org','apiuser@pve','examplePassword')
 
@@ -22,16 +22,18 @@ url or ip of a server, username and password:
 
 		b = pyproxmox(a)
 
-4. Run the pre defined methods of the pyproxmox class. NOTE: they all return data, usually in JSON format:
+4. Run the pre defined methods of the pyproxmox class:
 
 		status = b.getClusterStatus('vnode01')
+
+NOTE: They all return data, usually in JSON format.
 
 For more information see https://github.com/Daemonthread/pyproxmox
 
 #### Methods requiring post_data
 
 These methods need to passed a correctly formatted list of tuples.
-for exmaple, if I was to use the createOpenvzContainer for the above example node
+for example, if I was to use the createOpenvzContainer for the above example node
 I would need to pass the post_data with all the required variables for proxmox.
 
 	post_data = [('ostemplate','local:vztmpl/debian-6.0-standard_6.0-4_amd64.tar.gz'),
