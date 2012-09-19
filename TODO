@@ -1,0 +1,5 @@
+- Add KVM POST methods
+- Add PUT functionality and methods.
+- Add DELETE functionality and methods.
+- Clean up commenting.
+- Better documentation.
