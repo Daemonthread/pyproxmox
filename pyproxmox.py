@@ -345,7 +345,7 @@ class pyproxmox:
 	"""
 	Methods using the POST protocol to communicate with the Proxmox API. 
 	"""
-
+	
 	# OpenVZ Methods
 	
     def createOpenvzContainer(self,node,post_data):
@@ -392,4 +392,65 @@ class pyproxmox:
         data = self.post('nodes/%s/openvz/%s/migrate' % (node,vmid), post_data)
         return data
 
+    # KVM Methods
     
+    def createVirtualMachine(self,node,post_data):
+		"""
+		"""
+		data = self.post("nodes/%s/qemu" % (node), post_data)
+		return data
+		
+	def resetVirtualMachine(self,node,vmid):
+		""""""
+		post_data = None
+		data = self.post("nodes/%s/qemu/%s/status/reset" % (node,vmid), post_data)
+		return data
+		
+	def resumeVirtualMachine(self,node,vmid):
+		""""""
+		post_data = None
+		data = self.post("nodes/%s/qemu/%s/status/resume" % (node,vmid), post_data)
+		return data
+		
+	def shutdownVirtualMachine(self,node,vmid):
+		""""""
+		post_data = None
+		data = self.post("nodes/%s/qemu/%s/status/shutdown" % (node,vmid), post_data)
+		return data
+	
+	def startVirtualMachine(self,node,vmid):
+		""""""
+		post_data = None
+		data = self.post("nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
+		return data
+		
+	def stopVirtualMachine(self,node,vmid):
+		""""""
+		post_data = None
+		data = self.post("nodes/%s/qemu/%s/status/stop" % (node,vmid), post_data)
+		return data
+
+	def suspendVirtualMachine(self,node,vmid):
+		""""""
+		post_data = None
+		data = self.post("nodes/%s/qemu/%s/status/suspend" % (node,vmid), post_data)
+		return data
+		
+	def migrateVirtualMachine(self,node,vmid,target):
+		""""""
+		post_data = [('target', str(target))]
+		data = self.post("nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
+		return data
+		
+	def monitorVirtualMachine(self,node,vmid,command):
+		""""""
+		post_data = [('command', str(command))]
+		data = self.post("nodes/%s/qemu/%s/monitor" % (node,vmid), post_data)
+		return data
+		
+	def vncproxyVirtualMachine(self,node,vmid):
+		""""""
+		post_data = None
+		data = self.post("nodes/%s/qemu/%s/vncproxy" % (node,vmid), post_data)
+		return data
+	
