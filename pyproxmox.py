@@ -396,60 +396,62 @@ class pyproxmox:
     
     def createVirtualMachine(self,node,post_data):
 		"""
+		Create or restore a virtual machine. Returns JSON
+		Requires a dictionary of tuples formatted [('postname1','data'),('postname2','data')]
 		"""
 		data = self.post("nodes/%s/qemu" % (node), post_data)
 		return data
 		
 	def resetVirtualMachine(self,node,vmid):
-		""""""
+		"""Reset a virtual machine. Returns JSON"""
 		post_data = None
 		data = self.post("nodes/%s/qemu/%s/status/reset" % (node,vmid), post_data)
 		return data
 		
 	def resumeVirtualMachine(self,node,vmid):
-		""""""
+		"""Resume a virtual machine. Returns JSON"""
 		post_data = None
 		data = self.post("nodes/%s/qemu/%s/status/resume" % (node,vmid), post_data)
 		return data
 		
 	def shutdownVirtualMachine(self,node,vmid):
-		""""""
+		"""Shut down a virtual machine. Returns JSON"""
 		post_data = None
 		data = self.post("nodes/%s/qemu/%s/status/shutdown" % (node,vmid), post_data)
 		return data
 	
 	def startVirtualMachine(self,node,vmid):
-		""""""
+		"""Start a virtual machine. Returns JSON"""
 		post_data = None
 		data = self.post("nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
 		return data
 		
 	def stopVirtualMachine(self,node,vmid):
-		""""""
+		"""Stop a virtual machine. Returns JSON"""
 		post_data = None
 		data = self.post("nodes/%s/qemu/%s/status/stop" % (node,vmid), post_data)
 		return data
 
 	def suspendVirtualMachine(self,node,vmid):
-		""""""
+		"""Suspend a virtual machine. Returns JSON"""
 		post_data = None
 		data = self.post("nodes/%s/qemu/%s/status/suspend" % (node,vmid), post_data)
 		return data
 		
 	def migrateVirtualMachine(self,node,vmid,target):
-		""""""
+		"""Migrate a virtual machine. Returns JSON"""
 		post_data = [('target', str(target))]
 		data = self.post("nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
 		return data
 		
 	def monitorVirtualMachine(self,node,vmid,command):
-		""""""
+		"""Send monitor command to a virtual machine. Returns JSON"""
 		post_data = [('command', str(command))]
 		data = self.post("nodes/%s/qemu/%s/monitor" % (node,vmid), post_data)
 		return data
 		
 	def vncproxyVirtualMachine(self,node,vmid):
-		""""""
+		"""Creates a VNC Proxy for a virtual machine. Returns JSON"""
 		post_data = None
 		data = self.post("nodes/%s/qemu/%s/vncproxy" % (node,vmid), post_data)
 		return data
