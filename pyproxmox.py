@@ -67,7 +67,7 @@ class pyproxmox:
     Requires a valid instance of the prox_auth class when initializing.
     
     GET and POST methods are currently implemented along with quite a few
-    custom API methods...
+    custom API methods.
     """
     # INIT
     def __init__(self, auth_class):
@@ -125,8 +125,8 @@ class pyproxmox:
 		'nodes/vnode01/openvz/101/status/stop'
 		
 		2) post_data = a list of tuples in the format [('postname','data')]
-		or None if there is no post data to be used (as in the container stop
-		example).
+		or None if there is no post data to be used (as in the above container
+		stop example).
 		"""
         self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
     

@@ -28,10 +28,22 @@ url or ip of a server, username and password:
 
 For more information see https://github.com/Daemonthread/pyproxmox
 
-### Current List of Methods:
+#### Methods requiring post_data
 
-With the exception of the RRD methods all return unformatted JSON data.
-Not yet fully implemented, adding more methods as I have time.
+These methods need to passed a correctly formatted list of tuples.
+for exmaple, if I was to use the createOpenvzContainer for the above example node
+I would need to pass the post_data with all the required variables for proxmox.
+
+	post_data = [('ostemplate','local:vztmpl/debian-6.0-standard_6.0-4_amd64.tar.gz'),
+		('vmid','9001'),('cpus','4'),('description','test container'),
+		('disk','10'),('hostname','test.example.org'),('memory','1024'),
+		('password','testPassword'),('swap','1024')]
+	
+	b.createOpenvzContainer('vnode01',post_data)
+
+For more information on the accepted variables please see http://pve.proxmox.com/pve2-api-doc/
+
+### Current List of Methods:
 
 ##### CLUSTER GET METHODS
 
@@ -119,7 +131,7 @@ getNodeStorageRRDData(node,storage)
 
 ##### OPENVZ POST METHODS
 
-createOpenvzContainer(node,vmid,template,cpus,description,disk,hostname,memory,password,swap)
+createOpenvzContainer(node,post_data)
 
 mountOpenvzPrivate(node,vmid)
 

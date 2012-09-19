@@ -78,7 +78,7 @@ getNodeStorageRRD(node,storage)
 getNodeStorageRRDData(node,storage)
 
 # OPENVZ POST METHODS
-createOpenvzContainer(node,vmid,template,cpus,description,disk,hostname,memory,password,swap)
+createOpenvzContainer(node,post_data)
 mountOpenvzPrivate(node,vmid)
 shutdownOpenvzContainer(node,vmid)
 startOpenvzContainer(node,vmid)
