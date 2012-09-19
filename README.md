@@ -1,43 +1,44 @@
 pyproxmox
 =========
 
-A Python wrapper for the Proxmox 2.x API
+## A Python wrapper for the Proxmox 2.x API
 
-Installation using pip
+###### Installation using pip
 
 sudo pip install pyproxmox
 
-Example usage:
+###### Example usage:
 
-1) from pyproxmox import *
+1. 
+		from pyproxmox import \*
 
-2) Create an instance of the prox_auth class by passing in the
+2. Create an instance of the prox_auth class by passing in the
 url or ip of a server, username and password:
 
-a = prox_auth('vnode01.example.org','apiuser','examplePassword')
+		a = prox_auth('vnode01.example.org','apiuser','examplePassword')
 
-3) Create and instance of the pyproxmox class using the auth object as a parameter:
+3. Create and instance of the pyproxmox class using the auth object as a parameter:
 
-b = pyproxmox(a)
+		b = pyproxmox(a)
 
-4) Run the pre defined methods of the pyproxmox class. NOTE: they all return data, usually in JSON format:
+4. Run the pre defined methods of the pyproxmox class. NOTE: they all return data, usually in JSON format:
 
-status = b.getClusterStatus('vnode01')
+		status = b.getClusterStatus('vnode01')
 
 For more information see https://github.com/Daemonthread/pyproxmox
 
-Current List of Methods:
+### Current List of Methods:
 
 With the exception of the RRD methods all return unformatted JSON data.
 Not yet fully implemented, adding more methods as I have time.
 
-CLUSTER GET METHODS
+##### CLUSTER GET METHODS
 
 getClusterStatus()
 
 getClusterBackupSchedule()
 
-NODE GET METHODS
+##### NODE GET METHODS
 
 getNodeNetworks(node)
 
@@ -71,7 +72,7 @@ getNodeTaskLogByUPID(node,upid)
 
 getNodeTaskStatusByUPID(node,upid)
 
-OPENVZ GET METHODS
+##### OPENVZ GET METHODS
 
 getContainerIndex(node,vmid)
 
@@ -87,7 +88,7 @@ getContainerRRD(node,vmid)
 
 getContainerRRDData(node,vmid)
 
-KVM GET METHODS
+##### KVM GET METHODS
 
 getVirtualIndex(node,vmid)
 
@@ -103,7 +104,7 @@ getVirtualRRD(node,vmid)
 
 getVirtualRRDData(,node,vmid)
 
-STORAGE GET METHODS
+##### STORAGE GET METHODS
 
 getStorageVolumeData(node,storage,volume)
 
@@ -115,7 +116,7 @@ getNodeStorageRRD(node,storage)
 
 getNodeStorageRRDData(node,storage)
 
-OPENVZ POST METHODS
+##### OPENVZ POST METHODS
 
 createOpenvzContainer(node,vmid,template,cpus,description,disk,hostname,memory,password,swap)
 

@@ -106,32 +106,6 @@ class pyproxmox:
 
         self.returned_data = json.loads(self.response.getvalue())
         return self.returned_data
-
-    # PUT method
-    def put(self,option):
-        self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option, post_data)
-    
-        self.response = cStringIO.StringIO()
-
-        self.c = pycurl.Curl()
-        self.c.setopt(pycurl.URL, self.full_url)
-        self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
-        self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
-        self.c.setopt(pycurl.HTTPHEADER, ['CSRFPreventionToken:'+str(self.CSRF)])
-        self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
-        self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
-        self.c.setopt(pycurl.PUT, 1)
-
-        if post_data is not None:
-            post_data = urllib.urlencode(post_data)
-            self.c.setopt(pycurl.POSTFIELDS, post_data)
-            
-        self.c.setopt(pycurl.COOKIE, "PVEAuthCookie="+str(self.ticket))
-        self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
-        self.c.perform()
-
-        self.returned_data = json.loads(self.response.getvalue())
-        return self.returned_data
     
     #--------------------------#
     # ADD MORE AS TIME PERMITS #
@@ -356,10 +330,3 @@ class pyproxmox:
         return data
 
     
-    #--------------#
-    # PUT  METHODS #
-    #--------------#
-
-    #----------------#
-    # DELETE METHODS #
-    #----------------#
