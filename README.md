@@ -146,3 +146,25 @@ stopOpenvzContainer(node,vmid)
 unmountOpenvzPrivate(node,vmid)
 
 migrateOpenvzContainer(node,vmid,target)
+
+##### KVM POST METHODS
+    
+createVirtualMachine(self,node,post_data)
+
+resetVirtualMachine(self,node,vmid)
+
+resumeVirtualMachine(self,node,vmid)
+
+shutdownVirtualMachine(self,node,vmid)
+
+startVirtualMachine(self,node,vmid)
+
+stopVirtualMachine(self,node,vmid)
+
+suspendVirtualMachine(self,node,vmid)
+
+migrateVirtualMachine(self,node,vmid,target)
+
+monitorVirtualMachine(self,node,vmid,command)
+
+vncproxyVirtualMachine(self,node,vmid)
