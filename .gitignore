@@ -1,0 +1,5 @@
+*.py[cod]
+
+dist
+setup.py
+MANIFEST
