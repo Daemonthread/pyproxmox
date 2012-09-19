@@ -1,4 +1,5 @@
-"""A python wrapper for the Proxmox 2.x API.
+"""
+A python wrapper for the Proxmox 2.x API.
 
 Example usage:
 
@@ -16,7 +17,6 @@ b = pyproxmox(a)
 status = b.getClusterStatus('vnode01')
 
 For more information see https://github.com/Daemonthread/pyproxmox.
-
 """
 import pycurl
 import urllib
