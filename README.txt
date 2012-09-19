@@ -10,7 +10,7 @@ Example usage:
 2) Create an instance of the prox_auth class by passing in the
 url or ip of a server, username and password:
 
-a = prox_auth('vnode01.example.org','apiuser','examplePassword')
+a = prox_auth('vnode01.example.org','apiuser@pve','examplePassword')
 
 3) Create and instance of the pyproxmox class using the auth object as a parameter:
 

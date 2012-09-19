@@ -16,8 +16,8 @@ setup(
 		"Intended Audience :: Developers",
 		"Intended Audience :: System Administrators",
 		"License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
-	        "Operating System :: OS Independent",
-       		"Topic :: Software Development :: Libraries :: Python Modules",
+	    "Operating System :: OS Independent",
+        "Topic :: Software Development :: Libraries :: Python Modules",
 		],
 	long_description = """
 A python wrapper for the Proxmox 2.x API.
@@ -27,7 +27,7 @@ Example usage:
 1) Create an instance of the prox_auth class by passing in the
 url or ip of a server, username and password:
 
-a = prox_auth('vnode01.example.org','apiuser','examplePassword')
+a = prox_auth('vnode01.example.org','apiuser@pve','examplePassword')
 
 2) Create and instance of the pyproxmox class using the auth object as a parameter:
 
@@ -37,6 +37,6 @@ b = pyproxmox(a)
 
 status = b.getClusterStatus('vnode01')
 
-For more information see http://pypi.python.org/pypi/pyproxmox
+For more information see https://github.com/Daemonthread/pyproxmox
 """
 )

@@ -5,7 +5,7 @@ Example usage:
 1) Create an instance of the prox_auth class by passing in the
 url or ip of a server, username and password:
 
-a = prox_auth('vnode01.example.org','apiuser','examplePassword')
+a = prox_auth('vnode01.example.org','apiuser@pve','examplePassword')
 
 2) Create and instance of the pyproxmox class using the auth object as a parameter:
 
@@ -23,9 +23,19 @@ import urllib
 import cStringIO
 import json
 
-# Authentication class, needs to be initialised then passed to a pyproxmox instance.
-# Takes the url or IP of a server, username and password.
+# Authentication class
 class prox_auth:
+	"""
+	The authentication class, requires three strings:
+	
+	1. An IP/resolvable url (minus the https://)
+	2. Valid username, including the @pve or @pam
+	3. A password
+	
+	Creates the required ticket and CSRF prevention token for future connections.
+	
+	Designed to be instanciated then passed to the new pyproxmox class as an init parameter.
+	"""
     def __init__(self,url,username,password):
         self.url = url
         
@@ -50,20 +60,37 @@ class prox_auth:
         self.ticket = self.returned_data['data']['ticket']
         self.CSRF = self.returned_data['data']['CSRFPreventionToken']
 
-# Requires a vaild prox_auth object as a parameter.
+# The meat and veg class
 class pyproxmox:
-    # Set class variables
+    """
+    A class that acts as a python wrapper for the Proxmox 2.x API.
+    Requires a valid instance of the prox_auth class when initializing.
+    
+    GET and POST methods are currently implemented along with quite a few
+    custom API methods...
+    """
+    # INIT
     def __init__(self, auth_class):
+		"""Take the prox_auth instance and extract the important stuff"""
         self.url = auth_class.url
         self.ticket = auth_class.ticket
         self.CSRF = auth_class.CSRF
-
-    #--------------------#
-    # IMPORTANT METHODS  #
-    #--------------------#
     
-    # GET method 
+    # GET
     def get(self,option):
+		"""
+		Method for putting together and performing a GET request against
+		the Proxmox API.
+		
+		Uses pycurl for the actual work.
+		
+		Requires one string variable. 
+		
+		The option is added to the end of the formatted url for the api.
+		
+		An example being a cluster status request, simply pass the string
+		'cluster/status'.
+		"""
         self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
     
         self.response = cStringIO.StringIO()
@@ -81,8 +108,26 @@ class pyproxmox:
         self.returned_data = json.loads(self.response.getvalue())
         return self.returned_data
 
-    # POST method
+    # POST
     def post(self,option, post_data):
+		"""
+		Method for putting together and performing a POST request against
+		the Proxmox API.
+		
+		Uses pycurl for the actual work.
+		
+		Requires two variables. 
+		
+		1) option = String. This is used in the formatting of the url.
+		
+		An example being a request to stop container 101 on node vnode01, 
+		in this case the option string would be:
+		'nodes/vnode01/openvz/101/status/stop'
+		
+		2) post_data = a list of tuples in the format [('postname','data')]
+		or None if there is no post data to be used (as in the container stop
+		example).
+		"""
         self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
     
         self.response = cStringIO.StringIO()
@@ -106,21 +151,19 @@ class pyproxmox:
 
         self.returned_data = json.loads(self.response.getvalue())
         return self.returned_data
-    
-    #--------------------------#
-    # ADD MORE AS TIME PERMITS #
-    #--------------------------#
 
-    #-------------#
-    # GET METHODS #
-    #-------------#
+    """
+    Methods using the GET protocol to communicate with the Proxmox API.
+    """
 
     # Cluster Methods
     def getClusterStatus(self):
+		"""Get cluster status information. Returns JSON"""
         data = self.get('cluster/status')
         return data
 
     def getClusterBackupSchedule(self):
+		"""List vzdump backup schedule. Returns JSON"""
         data = self.get('cluster/backup')
         return data
 
@@ -128,66 +171,82 @@ class pyproxmox:
 
     # Node Methods
     def getNodeNetworks(self,node):
+		"""List available networks. Returns JSON"""
         data = self.get('nodes/%s/network' % (node))
         return data
 
     def getNodeInterface(self,node,interface):
+		"""Read network device configuration. Returns JSON"""
         data = self.get('nodes/%s/network/%s' % (node,interface))
         return data
 
     def getNodeContainerIndex(self,node):
+		"""OpenVZ container index (per node). Returns JSON"""
         data = self.get('nodes/%s/openvz' % (node))
         return data
 
     def getNodeVirtualIndex(self,node):
+		"""Virtual machine index (per node). Returns JSON"""
         data = self.get('nodes/%s/qemu' % (node))
         return data
 
     def getNodeServiceList(self,node):
+		"""Service list. Returns JSON"""
         data = self.get('nodes/%s/services' % (node))
         return data
 
     def getNodeStorage(self,node):
+		"""Get status for all datastores. Returns JSON"""
         data = self.get('nodes/%s/storage' % (node))
         return data
 
     def getNodeFinishedTasks(self,node):
+		"""Read task list for one node (finished tasks). Returns JSON"""
         data = self.get('nodes/%s/tasks' % (node))
         return data
 
     def getNodeDNS(self,node):
+		"""Read DNS settings. Returns JSON"""
         data = self.get('nodes/%s/dns' % (node))
         return data
 
     def getNodeStatus(self,node):
+		"""Read node status. Returns JSON"""
         data = self.get('nodes/%s/status' % (node))
         return data
 
     def getNodeSyslog(self,node):
+		"""Read system log. Returns JSON"""
         data = self.get('nodes/%s/syslog' % (node))
         return data
 
     def getNodeRRD(self,node):
+		"""Read node RRD statistics. Returns PNG"""
         data = self.get('nodes/%s/rrd' % (node))
         return data
     
     def getNodeRRDData(self,node):
+		"""Read node RRD statistics. Returns RRD"""
         data = self.get('nodes/%s/rrddata' % (node))
         return data
 
     def getNodeBeans(self,node):
+		"""Get user_beancounters failcnt for all active containers. Returns JSON"""
         data = self.get('nodes/%s/ubfailcnt' % (node))
         return data
 
     def getNodeTaskByUPID(self,node,upid):
+		"""Get tasks by UPID. Returns JSON"""
         data = self.get('nodes/%s/tasks/%s' % (node,upid))
         return data
 
     def getNodeTaskLogByUPID(self,node,upid):
+		"""Read task log. Returns JSON"""
         data = self.get('nodes/%s/tasks/%s/log' % (node,upid))
         return data
 
     def getNodeTaskStatusByUPID(self,node,upid):
+		"""Read task status. Returns JSON"""
         data = self.get('nodes/%s/tasks/%s/status' % (node,upid))
         return data
 
@@ -195,136 +254,140 @@ class pyproxmox:
     # OpenVZ Methods
 
     def getContainerIndex(self,node,vmid):
+		"""Directory index. Returns JSON"""
         data = self.get('nodes/%s/openvz/%s' % (node,vmid))
         return data
 
     def getContainerStatus(self,node,vmid):
+		"""Get virtual machine status. Returns JSON"""
         data = self.get('nodes/%s/openvz/%s/status/current' % (node,vmid))
         return data
 
     def getContainerBeans(self,node,vmid):
+		"""Get container user_beancounters. Returns JSON"""
         data = self.get('nodes/%s/openvz/%s/status/ubc' % (node,vmid))
         return data
 
     def getContainerConfig(self,node,vmid):
+		"""Get container configuration. Returns JSON"""
         data = self.get('nodes/%s/openvz/%s/config' % (node,vmid))
         return data
 
     def getContainerInitLog(self,node,vmid):
+		"""Read init log. Returns JSON"""
         data = self.get('nodes/%s/openvz/%s/initlog' % (node,vmid))
         return data
 
     def getContainerRRD(self,node,vmid):
+		"""Read VM RRD statistics. Returns PNG"""
         data = self.get('nodes/%s/openvz/%s/rrd' % (node,vmid))
         return data
 
     def getContainerRRDData(self,node,vmid):
+		"""Read VM RRD statistics. Returns RRD"""
         data = self.get('nodes/%s/openvz/%s/rrddata' % (node,vmid))
         return data
 
     # KVM Methods
 
     def getVirtualIndex(self,node,vmid):
+		"""Directory index. Returns JSON"""
         data = self.get('nodes/%s/qemu/%s' % (node,vmid))
         return data
 
     def getVirtualStatus(self,node,vmid):
+		"""Get virtual machine status. Returns JSON"""
         data = self.get('nodes/%s/qemu/%s/status/current' % (node,vmid))
         return data
 
-    def getVirtualBeans(self,node,vmid):
-        data = self.get('nodes/%s/qemu/%s/status/ubc' % (node,vmid))
-        return data
-
     def getVirtualConfig(self,node,vmid):
+		"""Get virtual machine configuration. Returns JSON"""
         data = self.get('nodes/%s/qemu/%s/config' % (node,vmid))
         return data
 
-    def getVirtualInitLog(self,node,vmid):
-        data = self.get('nodes/%s/qemu/%s/initlog' % (node,vmid))
-        return data
-
     def getVirtualRRD(self,node,vmid):
+		"""Read VM RRD statistics. Returns JSON"""
         data = self.get('nodes/%s/qemu/%s/rrd' % (node,vmid))
         return data
 
     def getVirtualRRDData(self,node,vmid):
+		"""Read VM RRD statistics. Returns JSON"""
         data = self.get('nodes/%s/qemu/%s/rrddata' % (node,vmid))
         return data
 
     # Storage Methods
 
     def getStorageVolumeData(self,node,storage,volume):
+		"""Get volume attributes. Returns JSON"""
         data = self.get('nodes/%s/storage/%s/content/%s' % (node,storage,volume))
         return data
 
     def getStorageConfig(self,storage):
+		"""Read storage config. Returns JSON"""
         data = self.get('storage/%s' % (storage))
         return data
     
     def getNodeStorageContent(self,node,storage):
+		"""List storage content. Returns JSON"""
         data = self.get('nodes/%s/storage/%s/content' % (node,storage))
         return data
 
     def getNodeStorageRRD(self,node,storage):
+		"""Read storage RRD statistics. Returns JSON"""
         data = self.get('nodes/%s/storage/%s/rrd' % (node,storage))
         return data
 
     def getNodeStorageRRDData(self,node,storage):
+		"""Read storage RRD statistics. Returns JSON"""
         data = self.get('nodes/%s/storage/%s/rrddata' % (node,storage))
         return data
 
-    #--------------#
-    # POST METHODS #
-    #--------------#
+	"""
+	Methods using the POST protocol to communicate with the Proxmox API. 
+	"""
 
-    # Create or update an OpenVZ container
-    def createOpenvzContainer(self,node,vmid,template,cpus,description,disk,hostname,memory,password,swap):
-        post_data = [('vmid', str(vmid)),
-                     ('ostemplate', str(template)),
-                     ('cpus', str(cpus)),
-                     ('description', str(description)),
-                     ('disk', str(disk)),
-                     ('hostname', str(hostname)),
-                     ('memory', str(memory)),
-                     ('password', str(password)),
-                     ('swap', str(swap))
-                     ]
+	# OpenVZ Methods
+	
+    def createOpenvzContainer(self,node,post_data):
+		"""
+		Create or restore a container. Returns JSON
+		Requires a dictionary of tuples formatted [('postname1','data'),('postname2','data')]
+		"""
         data = self.post("nodes/%s/openvz" % (node), post_data)
         return data
 
-    # Mount a containers private area
     def mountOpenvzPrivate(self,node,vmid):
+		"""Mounts container private area. Returns JSON"""
         post_data = None
         data = self.post('nodes/%s/openvz/%s/status/mount' % (node,vmid), post_data)
         return data
 
-    # Shut down a container
     def shutdownOpenvzContainer(self,node,vmid):
+		"""Shutdown the container. Returns JSON"""
         post_data = None
         data = self.post('nodes/%s/openvz/%s/status/shutdown' % (node,vmid), post_data)
         return data
 
-    # Start a container
     def startOpenvzContainer(self,node,vmid):
+		"""Start the container. Returns JSON"""
         post_data = None
         data = self.post('nodes/%s/openvz/%s/status/start' % (node,vmid), post_data)
         return data
 
-    # Stop a container
     def stopOpenvzContainer(self,node,vmid):
+		"""Stop the container. Returns JSON"""
         post_data = None
         data = self.post('nodes/%s/openvz/%s/status/stop' % (node,vmid), post_data)
         return data
 
-    # Unmount a containers private area
     def unmountOpenvzPrivate(self,node,vmid):
+		"""Unmounts container private area. Returns JSON"""
         post_data = None
         data = self.post('nodes/%s/openvz/%s/status/unmount' % (node,vmid), post_data)
         return data
 
-    # Migrate a container
     def migrateOpenvzContainer(self,node,vmid,target):
+		"""Migrate the container to another node. Creates a new migration task. Returns JSON"""
         post_data = [('target', str(target))]
         data = self.post('nodes/%s/openvz/%s/migrate' % (node,vmid), post_data)
         return data
