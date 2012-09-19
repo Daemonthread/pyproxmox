@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
 	name = 'pyproxmox',
-	version = '0.9.1',
+	version = '0.9.3',
 	description = 'Python Wrapper for the Proxmox 2.x API',
 	author = 'Toby Sears',
 	author_email = 'admin@tobysears.co.uk',
