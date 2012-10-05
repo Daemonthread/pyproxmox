@@ -54,7 +54,7 @@ getClusterStatus()
 - "Get cluster status information. Returns JSON"
 
 getClusterBackupSchedule()
- "List vzdump backup schedule. Returns JSON"
+- "List vzdump backup schedule. Returns JSON"
 
 ###### Node Methods
 getNodeNetworks(node)
@@ -247,12 +247,12 @@ vncproxyVirtualMachine(node,vmid)
       
 #### DELETE Methods
     
-####### OPENVZ
+###### OPENVZ
     
 deleteOpenvzContainer(node,vmid)
 - "Deletes the specified openvz container"
 
-####### NODE
+###### NODE
     
 deleteNodeNetworkConfig(node)
 - "Revert network configuration changes."
