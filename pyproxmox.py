@@ -62,396 +62,621 @@ class prox_auth:
 
 # The meat and veg class
 class pyproxmox:
-	"""
-	A class that acts as a python wrapper for the Proxmox 2.x API.
-	Requires a valid instance of the prox_auth class when initializing.
+    """
+    A class that acts as a python wrapper for the Proxmox 2.x API.
+    Requires a valid instance of the prox_auth class when initializing.
     
-	GET and POST methods are currently implemented along with quite a few
-	custom API methods.
-	"""
-	# INIT
-	def __init__(self, auth_class):
-		"""Take the prox_auth instance and extract the important stuff"""
-		self.url = auth_class.url
-		self.ticket = auth_class.ticket
-		self.CSRF = auth_class.CSRF
+    GET and POST methods are currently implemented along with quite a few
+    custom API methods.
+    """
+    # INIT
+    def __init__(self, auth_class):
+        """Take the prox_auth instance and extract the important stuff"""
+        self.url = auth_class.url
+        self.ticket = auth_class.ticket
+        self.CSRF = auth_class.CSRF
     
     # GET
-	def get(self,option):
-		"""
-		Method for putting together and performing a GET request against
-		the Proxmox API.
+    def get(self,option):
+        """
+        Method for putting together and performing a GET request against
+        the Proxmox API.
 		
-		Uses pycurl for the actual work.
+        Uses pycurl for the actual work.
 		
-		Requires one string variable. 
+        Requires one string variable. 
 		
-		The option is added to the end of the formatted url for the api.
+        The option is added to the end of the formatted url for the api.
 		
-		An example being a cluster status request, simply pass the string
-		'cluster/status'.
-		"""
-		self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
+        An example being a cluster status request, simply pass the string
+        'cluster/status'.
+        """
+        self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
     
-		self.response = cStringIO.StringIO()
+        self.response = cStringIO.StringIO()
 
-		self.c = pycurl.Curl()
-		self.c.setopt(pycurl.URL, self.full_url)
-		self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
-		self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
-		self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
-		self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
-		self.c.setopt(pycurl.COOKIE, "PVEAuthCookie="+str(self.ticket))
-		self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
-		self.c.perform()
+        self.c = pycurl.Curl()
+        self.c.setopt(pycurl.URL, self.full_url)
+        self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
+        self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
+        self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
+        self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
+        self.c.setopt(pycurl.COOKIE, "PVEAuthCookie="+str(self.ticket))
+        self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
+        self.c.perform()
 
-		self.returned_data = json.loads(self.response.getvalue())
-		return self.returned_data
+        try:
+            self.returned_data = json.loads(self.response.getvalue())
+            return self.returned_data
+        except:
+            print "Error in trying to process JSON"
+            print self.response.getvalue()
 
     # POST
-	def post(self,option, post_data):
-		"""
-		Method for putting together and performing a POST request against
-		the Proxmox API.
+    def post(self,option, post_data):
+        """
+        Method for putting together and performing a POST request against
+        the Proxmox API.
 		
-		Uses pycurl for the actual work.
+        Uses pycurl for the actual work.
 		
-		Requires two variables. 
+        Requires two variables. 
+
+        1) option = String. This is used in the formatting of the url.
 		
-		1) option = String. This is used in the formatting of the url.
+        An example being a request to stop container 101 on node vnode01, 
+        in this case the option string would be:
+        'nodes/vnode01/openvz/101/status/stop'
 		
-		An example being a request to stop container 101 on node vnode01, 
-		in this case the option string would be:
-		'nodes/vnode01/openvz/101/status/stop'
-		
-		2) post_data = a list of tuples in the format [('postname','data')]
-		or None if there is no post data to be used (as in the above container
-		stop example).
-		"""
-		self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
+        2) post_data = a list of tuples in the format [('postname','data')]
+        or None if there is no post data to be used (as in the above container
+        stop example).
+        """
+        self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
     
-		self.response = cStringIO.StringIO()
+        self.response = cStringIO.StringIO()
         
-		self.c = pycurl.Curl()
-		self.c.setopt(pycurl.URL, self.full_url)
-		self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
-		self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
-		self.c.setopt(pycurl.HTTPHEADER, ['CSRFPreventionToken:'+str(self.CSRF)])
-		self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
-		self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
+        self.c = pycurl.Curl()
+        self.c.setopt(pycurl.URL, self.full_url)
+        self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
+        self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
+        self.c.setopt(pycurl.HTTPHEADER, ['CSRFPreventionToken:'+str(self.CSRF)])
+        self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
+        self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
         
-		if post_data is not None:
-			post_data = urllib.urlencode(post_data)
-			self.c.setopt(pycurl.POSTFIELDS, post_data)
+        if post_data is not None:
+            post_data = urllib.urlencode(post_data)
+            self.c.setopt(pycurl.POSTFIELDS, post_data)
             
-		self.c.setopt(pycurl.POST, 1)
-		self.c.setopt(pycurl.COOKIE, "PVEAuthCookie="+str(self.ticket))
-		self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
-		self.c.perform()
+        self.c.setopt(pycurl.POST, 1)
+        self.c.setopt(pycurl.COOKIE, "PVEAuthCookie="+str(self.ticket))
+        self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
+        self.c.perform()
+		
+        try:
+            self.returned_data = json.loads(self.response.getvalue())
+            return self.returned_data
+        except:
+            print "Error in trying to process JSON"
+            print self.response.getvalue()
 
-		self.returned_data = json.loads(self.response.getvalue())
-		return self.returned_data
-
-	"""
-	Methods using the GET protocol to communicate with the Proxmox API.
-	"""
+    #PUT
+    def put(self,option, put_data):
+        """
+        Method for assembling and performing a PUT request to the 
+        Proxmox API.
+        
+        Uses pycurl for the actual work.
+        
+        Requires two variables.
+        
+        1) option = String. This is used in the formatting of the url.
+        
+        2) put_data = a list of tuples in the format [('putname','data')].
+        """
+        self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
+        
+        self.response = cStringIO.StringIO()
+        
+        self.c = pycurl.Curl()
+        
+        self.c.setopt(pycurl.URL, self.full_url)
+        self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
+        self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
+        self.c.setopt(pycurl.HTTPHEADER, ['CSRFPreventionToken:'+str(self.CSRF)])
+        self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
+        self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
+        self.c.setopt(pycurl.CUSTOMREQUEST, 'PUT')
+        
+        if put_data is not None:
+            put_data = urllib.urlencode(put_data)
+            self.c.setopt(pycurl.POSTFIELDS, put_data)
+            
+        self.c.setopt(pycurl.COOKIE, "PVEAuthCookie="+str(self.ticket))
+        self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
+        self.c.perform()
+		
+        try:
+            self.returned_data = json.loads(self.response.getvalue())
+            return self.returned_data
+        except:
+            print "Error in trying to process JSON"
+            print self.response.getvalue()
+            
+    #DELETE
+    def delete(self,option):
+        """
+        Method for assembling and performing a DELETE request to the 
+        Proxmox API.
+        
+        Uses pycurl for the actual work.
+        
+        Requires one variable.
+        
+        1) option = String. This is used in the formatting of the url.
+        """
+        self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
+        
+        self.response = cStringIO.StringIO()
+        
+        self.c = pycurl.Curl()
+        
+        self.c.setopt(pycurl.URL, self.full_url)
+        self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
+        self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
+        self.c.setopt(pycurl.HTTPHEADER, ['CSRFPreventionToken:'+str(self.CSRF)])
+        self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
+        self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
+        
+        self.c.setopt(pycurl.CUSTOMREQUEST, 'DELETE')
+            
+        self.c.setopt(pycurl.COOKIE, "PVEAuthCookie="+str(self.ticket))
+        self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
+        self.c.perform()
+		
+        try:
+            self.returned_data = json.loads(self.response.getvalue())
+            
+            return self.returned_data
+        except:
+            print "Error in trying to process JSON"
+            print self.response.getvalue()
+    
+    """
+    Methods using the GET protocol to communicate with the Proxmox API.
+    """
 
     # Cluster Methods
-	def getClusterStatus(self):
-		"""Get cluster status information. Returns JSON"""
-		data = self.get('cluster/status')
-		return data
+    def getClusterStatus(self):
+        """Get cluster status information. Returns JSON"""
+        data = self.get('cluster/status')
+        return data
 
-	def getClusterBackupSchedule(self):
-		"""List vzdump backup schedule. Returns JSON"""
-		data = self.get('cluster/backup')
-		return data
+    def getClusterBackupSchedule(self):
+        """List vzdump backup schedule. Returns JSON"""
+        data = self.get('cluster/backup')
+        return data
 
-    
+
 
     # Node Methods
-	def getNodeNetworks(self,node):
-		"""List available networks. Returns JSON"""
-		data = self.get('nodes/%s/network' % (node))
-		return data
+    def getNodeNetworks(self,node):
+        """List available networks. Returns JSON"""
+        data = self.get('nodes/%s/network' % (node))
+        return data
 
-	def getNodeInterface(self,node,interface):
-		"""Read network device configuration. Returns JSON"""
-		data = self.get('nodes/%s/network/%s' % (node,interface))
-		return data
+    def getNodeInterface(self,node,interface):
+        """Read network device configuration. Returns JSON"""
+        data = self.get('nodes/%s/network/%s' % (node,interface))
+        return data
 
-	def getNodeContainerIndex(self,node):
-		"""OpenVZ container index (per node). Returns JSON"""
-		data = self.get('nodes/%s/openvz' % (node))
-		return data
+    def getNodeContainerIndex(self,node):
+        """OpenVZ container index (per node). Returns JSON"""
+        data = self.get('nodes/%s/openvz' % (node))
+        return data
 
-	def getNodeVirtualIndex(self,node):
-		"""Virtual machine index (per node). Returns JSON"""
-		data = self.get('nodes/%s/qemu' % (node))
-		return data
+    def getNodeVirtualIndex(self,node):
+        """Virtual machine index (per node). Returns JSON"""
+        data = self.get('nodes/%s/qemu' % (node))
+        return data
 
-	def getNodeServiceList(self,node):
-		"""Service list. Returns JSON"""
-		data = self.get('nodes/%s/services' % (node))
-		return data
+    def getNodeServiceList(self,node):
+        """Service list. Returns JSON"""
+        data = self.get('nodes/%s/services' % (node))
+        return data
 
-	def getNodeStorage(self,node):
-		"""Get status for all datastores. Returns JSON"""
-		data = self.get('nodes/%s/storage' % (node))
-		return data
+    def getNodeServiceState(self,node,service):
+        """Read service properties"""
+        data = self.get('nodes/%s/services/%s/state' % (node,service))
+        return data
 
-	def getNodeFinishedTasks(self,node):
-		"""Read task list for one node (finished tasks). Returns JSON"""
-		data = self.get('nodes/%s/tasks' % (node))
-		return data
+    def getNodeStorage(self,node):
+        """Get status for all datastores. Returns JSON"""
+        data = self.get('nodes/%s/storage' % (node))
+        return data
 
-	def getNodeDNS(self,node):
-		"""Read DNS settings. Returns JSON"""
-		data = self.get('nodes/%s/dns' % (node))
-		return data
+    def getNodeFinishedTasks(self,node):
+        """Read task list for one node (finished tasks). Returns JSON"""
+        data = self.get('nodes/%s/tasks' % (node))
+        return data
 
-	def getNodeStatus(self,node):
-		"""Read node status. Returns JSON"""
-		data = self.get('nodes/%s/status' % (node))
-		return data
+    def getNodeDNS(self,node):
+        """Read DNS settings. Returns JSON"""
+        data = self.get('nodes/%s/dns' % (node))
+        return data
 
-	def getNodeSyslog(self,node):
-		"""Read system log. Returns JSON"""
-		data = self.get('nodes/%s/syslog' % (node))
-		return data
+    def getNodeStatus(self,node):
+        """Read node status. Returns JSON"""
+        data = self.get('nodes/%s/status' % (node))
+        return data
 
-	def getNodeRRD(self,node):
-		"""Read node RRD statistics. Returns PNG"""
-		data = self.get('nodes/%s/rrd' % (node))
-		return data
+    def getNodeSyslog(self,node):
+        """Read system log. Returns JSON"""
+        data = self.get('nodes/%s/syslog' % (node))
+        return data
+
+    def getNodeRRD(self,node):
+        """Read node RRD statistics. Returns PNG"""
+        data = self.get('nodes/%s/rrd' % (node))
+        return data
     
-	def getNodeRRDData(self,node):
-		"""Read node RRD statistics. Returns RRD"""
-		data = self.get('nodes/%s/rrddata' % (node))
-		return data
+    def getNodeRRDData(self,node):
+        """Read node RRD statistics. Returns RRD"""
+        data = self.get('nodes/%s/rrddata' % (node))
+        return data
 
-	def getNodeBeans(self,node):
-		"""Get user_beancounters failcnt for all active containers. Returns JSON"""
-		data = self.get('nodes/%s/ubfailcnt' % (node))
-		return data
+    def getNodeBeans(self,node):
+        """Get user_beancounters failcnt for all active containers. Returns JSON"""
+        data = self.get('nodes/%s/ubfailcnt' % (node))
+        return data
 
-	def getNodeTaskByUPID(self,node,upid):
-		"""Get tasks by UPID. Returns JSON"""
-		data = self.get('nodes/%s/tasks/%s' % (node,upid))
-		return data
+    def getNodeTaskByUPID(self,node,upid):
+        """Get tasks by UPID. Returns JSON"""
+        data = self.get('nodes/%s/tasks/%s' % (node,upid))
+        return data
 
-	def getNodeTaskLogByUPID(self,node,upid):
-		"""Read task log. Returns JSON"""
-		data = self.get('nodes/%s/tasks/%s/log' % (node,upid))
-		return data
+    def getNodeTaskLogByUPID(self,node,upid):
+        """Read task log. Returns JSON"""
+        data = self.get('nodes/%s/tasks/%s/log' % (node,upid))
+        return data
 
-	def getNodeTaskStatusByUPID(self,node,upid):
-		"""Read task status. Returns JSON"""
-		data = self.get('nodes/%s/tasks/%s/status' % (node,upid))
-		return data
+    def getNodeTaskStatusByUPID(self,node,upid):
+        """Read task status. Returns JSON"""
+        data = self.get('nodes/%s/tasks/%s/status' % (node,upid))
+        return data
+
+    # Scan
+
+    def getNodeScanMethods(self,node):
+        """Get index of available scan methods"""
+        data = self.get('nodes/%s/scan' % (node))
+        return data
+
+    def getRemoteiSCSI(self,node):
+        """Scan remote iSCSI server."""
+        data = self.get('nodes/%s/scan/iscsi' % (node))
+        return data
+
+    def getNodeLVMGroups(self,node):
+        """Scan local LVM groups"""
+        data = self.get('nodes/%s/scan/lvm' % (node))
+        return data
+
+    def getRemoteNFS(self,node):
+        """Scan remote NFS server"""
+        data = self.get('nodes/%s/scan/nfs' % (node))
+        return data
+
+    def getNodeUSB(self,node):
+        """List local USB devices"""
+        data = self.get('nodes/%s/scan/usb' % (node))
+        return data
+
 
     
     # OpenVZ Methods
 
-	def getContainerIndex(self,node,vmid):
-		"""Directory index. Returns JSON"""
-		data = self.get('nodes/%s/openvz/%s' % (node,vmid))
-		return data
+    def getContainerIndex(self,node,vmid):
+        """Directory index. Returns JSON"""
+        data = self.get('nodes/%s/openvz/%s' % (node,vmid))
+        return data
 
-	def getContainerStatus(self,node,vmid):
-		"""Get virtual machine status. Returns JSON"""
-		data = self.get('nodes/%s/openvz/%s/status/current' % (node,vmid))
-		return data
+    def getContainerStatus(self,node,vmid):
+        """Get virtual machine status. Returns JSON"""
+        data = self.get('nodes/%s/openvz/%s/status/current' % (node,vmid))
+        return data
 
-	def getContainerBeans(self,node,vmid):
-		"""Get container user_beancounters. Returns JSON"""
-		data = self.get('nodes/%s/openvz/%s/status/ubc' % (node,vmid))
-		return data
+    def getContainerBeans(self,node,vmid):
+        """Get container user_beancounters. Returns JSON"""
+        data = self.get('nodes/%s/openvz/%s/status/ubc' % (node,vmid))
+        return data
 
-	def getContainerConfig(self,node,vmid):
-		"""Get container configuration. Returns JSON"""
-		data = self.get('nodes/%s/openvz/%s/config' % (node,vmid))
-		return data
+    def getContainerConfig(self,node,vmid):
+        """Get container configuration. Returns JSON"""
+        data = self.get('nodes/%s/openvz/%s/config' % (node,vmid))
+        return data
 
-	def getContainerInitLog(self,node,vmid):
-		"""Read init log. Returns JSON"""
-		data = self.get('nodes/%s/openvz/%s/initlog' % (node,vmid))
-		return data
+    def getContainerInitLog(self,node,vmid):
+        """Read init log. Returns JSON"""
+        data = self.get('nodes/%s/openvz/%s/initlog' % (node,vmid))
+        return data
 
-	def getContainerRRD(self,node,vmid):
-		"""Read VM RRD statistics. Returns PNG"""
-		data = self.get('nodes/%s/openvz/%s/rrd' % (node,vmid))
-		return data
+    def getContainerRRD(self,node,vmid):
+        """Read VM RRD statistics. Returns PNG"""
+        data = self.get('nodes/%s/openvz/%s/rrd' % (node,vmid))
+        return data
 
-	def getContainerRRDData(self,node,vmid):
-		"""Read VM RRD statistics. Returns RRD"""
-		data = self.get('nodes/%s/openvz/%s/rrddata' % (node,vmid))
-		return data
+    def getContainerRRDData(self,node,vmid):
+        """Read VM RRD statistics. Returns RRD"""
+        data = self.get('nodes/%s/openvz/%s/rrddata' % (node,vmid))
+        return data
 
     # KVM Methods
 
-	def getVirtualIndex(self,node,vmid):
-		"""Directory index. Returns JSON"""
-		data = self.get('nodes/%s/qemu/%s' % (node,vmid))
-		return data
+    def getVirtualIndex(self,node,vmid):
+        """Directory index. Returns JSON"""
+        data = self.get('nodes/%s/qemu/%s' % (node,vmid))
+        return data
 
-	def getVirtualStatus(self,node,vmid):
-		"""Get virtual machine status. Returns JSON"""
-		data = self.get('nodes/%s/qemu/%s/status/current' % (node,vmid))
-		return data
+    def getVirtualStatus(self,node,vmid):
+        """Get virtual machine status. Returns JSON"""
+        data = self.get('nodes/%s/qemu/%s/status/current' % (node,vmid))
+        return data
 
-	def getVirtualConfig(self,node,vmid):
-		"""Get virtual machine configuration. Returns JSON"""
-		data = self.get('nodes/%s/qemu/%s/config' % (node,vmid))
-		return data
+    def getVirtualConfig(self,node,vmid):
+        """Get virtual machine configuration. Returns JSON"""
+        data = self.get('nodes/%s/qemu/%s/config' % (node,vmid))
+        return data
 
-	def getVirtualRRD(self,node,vmid):
-		"""Read VM RRD statistics. Returns JSON"""
-		data = self.get('nodes/%s/qemu/%s/rrd' % (node,vmid))
-		return data
+    def getVirtualRRD(self,node,vmid):
+        """Read VM RRD statistics. Returns JSON"""
+        data = self.get('nodes/%s/qemu/%s/rrd' % (node,vmid))
+        return data
 
-	def getVirtualRRDData(self,node,vmid):
-		"""Read VM RRD statistics. Returns JSON"""
-		data = self.get('nodes/%s/qemu/%s/rrddata' % (node,vmid))
-		return data
+    def getVirtualRRDData(self,node,vmid):
+        """Read VM RRD statistics. Returns JSON"""
+        data = self.get('nodes/%s/qemu/%s/rrddata' % (node,vmid))
+        return data
 
     # Storage Methods
 
-	def getStorageVolumeData(self,node,storage,volume):
-		"""Get volume attributes. Returns JSON"""
-		data = self.get('nodes/%s/storage/%s/content/%s' % (node,storage,volume))
-		return data
+    def getStorageVolumeData(self,node,storage,volume):
+        """Get volume attributes. Returns JSON"""
+        data = self.get('nodes/%s/storage/%s/content/%s' % (node,storage,volume))
+        return data
 
-	def getStorageConfig(self,storage):
-		"""Read storage config. Returns JSON"""
-		data = self.get('storage/%s' % (storage))
-		return data
+    def getStorageConfig(self,storage):
+        """Read storage config. Returns JSON"""
+        data = self.get('storage/%s' % (storage))
+        return data
     
-	def getNodeStorageContent(self,node,storage):
-		"""List storage content. Returns JSON"""
-		data = self.get('nodes/%s/storage/%s/content' % (node,storage))
-		return data
+    def getNodeStorageContent(self,node,storage):
+        """List storage content. Returns JSON"""
+        data = self.get('nodes/%s/storage/%s/content' % (node,storage))
+        return data
 
-	def getNodeStorageRRD(self,node,storage):
-		"""Read storage RRD statistics. Returns JSON"""
-		data = self.get('nodes/%s/storage/%s/rrd' % (node,storage))
-		return data
+    def getNodeStorageRRD(self,node,storage):
+        """Read storage RRD statistics. Returns JSON"""
+        data = self.get('nodes/%s/storage/%s/rrd' % (node,storage))
+        return data
 
-	def getNodeStorageRRDData(self,node,storage):
-		"""Read storage RRD statistics. Returns JSON"""
-		data = self.get('nodes/%s/storage/%s/rrddata' % (node,storage))
-		return data
+    def getNodeStorageRRDData(self,node,storage):
+        """Read storage RRD statistics. Returns JSON"""
+        data = self.get('nodes/%s/storage/%s/rrddata' % (node,storage))
+        return data
 
-	"""
-	Methods using the POST protocol to communicate with the Proxmox API. 
-	"""
+    """
+    Methods using the POST protocol to communicate with the Proxmox API. 
+    """
 	
-	# OpenVZ Methods
+    # OpenVZ Methods
 	
-	def createOpenvzContainer(self,node,post_data):
-		"""
-		Create or restore a container. Returns JSON
-		Requires a dictionary of tuples formatted [('postname1','data'),('postname2','data')]
-		"""
-		data = self.post("nodes/%s/openvz" % (node), post_data)
-		return data
+    def createOpenvzContainer(self,node,post_data):
+        """
+        Create or restore a container. Returns JSON
+        Requires a dictionary of tuples formatted [('postname1','data'),('postname2','data')]
+        """
+        data = self.post("nodes/%s/openvz" % (node), post_data)
+        return data
 
-	def mountOpenvzPrivate(self,node,vmid):
-		"""Mounts container private area. Returns JSON"""
-		post_data = None
-		data = self.post('nodes/%s/openvz/%s/status/mount' % (node,vmid), post_data)
-		return data
+    def mountOpenvzPrivate(self,node,vmid):
+        """Mounts container private area. Returns JSON"""
+        post_data = None
+        data = self.post('nodes/%s/openvz/%s/status/mount' % (node,vmid), post_data)
+        return data
 
-	def shutdownOpenvzContainer(self,node,vmid):
-		"""Shutdown the container. Returns JSON"""
-		post_data = None
-		data = self.post('nodes/%s/openvz/%s/status/shutdown' % (node,vmid), post_data)
-		return data
+    def shutdownOpenvzContainer(self,node,vmid):
+        """Shutdown the container. Returns JSON"""
+        post_data = None
+        data = self.post('nodes/%s/openvz/%s/status/shutdown' % (node,vmid), post_data)
+        return data
 
-	def startOpenvzContainer(self,node,vmid):
-		"""Start the container. Returns JSON"""
-		post_data = None
-		data = self.post('nodes/%s/openvz/%s/status/start' % (node,vmid), post_data)
-		return data
+    def startOpenvzContainer(self,node,vmid):
+        """Start the container. Returns JSON"""
+        post_data = None
+        data = self.post('nodes/%s/openvz/%s/status/start' % (node,vmid), post_data)
+        return data
 
-	def stopOpenvzContainer(self,node,vmid):
-		"""Stop the container. Returns JSON"""
-		post_data = None
-		data = self.post('nodes/%s/openvz/%s/status/stop' % (node,vmid), post_data)
-		return data
+    def stopOpenvzContainer(self,node,vmid):
+        """Stop the container. Returns JSON"""
+        post_data = None
+        data = self.post('nodes/%s/openvz/%s/status/stop' % (node,vmid), post_data)
+        return data
 
-	def unmountOpenvzPrivate(self,node,vmid):
-		"""Unmounts container private area. Returns JSON"""
-		post_data = None
-		data = self.post('nodes/%s/openvz/%s/status/unmount' % (node,vmid), post_data)
-		return data
+    def unmountOpenvzPrivate(self,node,vmid):
+        """Unmounts container private area. Returns JSON"""
+        post_data = None
+        data = self.post('nodes/%s/openvz/%s/status/unmount' % (node,vmid), post_data)
+        return data
 
-	def migrateOpenvzContainer(self,node,vmid,target):
-		"""Migrate the container to another node. Creates a new migration task. Returns JSON"""
-		post_data = [('target', str(target))]
-		data = self.post('nodes/%s/openvz/%s/migrate' % (node,vmid), post_data)
-		return data
+    def migrateOpenvzContainer(self,node,vmid,target):
+        """Migrate the container to another node. Creates a new migration task. Returns JSON"""
+        post_data = [('target', str(target))]
+        data = self.post('nodes/%s/openvz/%s/migrate' % (node,vmid), post_data)
+        return data
 
     # KVM Methods
-    
-	def createVirtualMachine(self,node,post_data):
-		"""
-		Create or restore a virtual machine. Returns JSON
-		Requires a dictionary of tuples formatted [('postname1','data'),('postname2','data')]
-		"""
-		data = self.post("nodes/%s/qemu" % (node), post_data)
-		return data
-		
-	def resetVirtualMachine(self,node,vmid):
-		"""Reset a virtual machine. Returns JSON"""
-		post_data = None
-		data = self.post("nodes/%s/qemu/%s/status/reset" % (node,vmid), post_data)
-		return data
-		
-	def resumeVirtualMachine(self,node,vmid):
-		"""Resume a virtual machine. Returns JSON"""
-		post_data = None
-		data = self.post("nodes/%s/qemu/%s/status/resume" % (node,vmid), post_data)
-		return data
-		
-	def shutdownVirtualMachine(self,node,vmid):
-		"""Shut down a virtual machine. Returns JSON"""
-		post_data = None
-		data = self.post("nodes/%s/qemu/%s/status/shutdown" % (node,vmid), post_data)
-		return data
-	
-	def startVirtualMachine(self,node,vmid):
-		"""Start a virtual machine. Returns JSON"""
-		post_data = None
-		data = self.post("nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
-		return data
-		
-	def stopVirtualMachine(self,node,vmid):
-		"""Stop a virtual machine. Returns JSON"""
-		post_data = None
-		data = self.post("nodes/%s/qemu/%s/status/stop" % (node,vmid), post_data)
-		return data
 
-	def suspendVirtualMachine(self,node,vmid):
-		"""Suspend a virtual machine. Returns JSON"""
-		post_data = None
-		data = self.post("nodes/%s/qemu/%s/status/suspend" % (node,vmid), post_data)
-		return data
+    def createVirtualMachine(self,node,post_data):
+        """
+        Create or restore a virtual machine. Returns JSON
+        Requires a dictionary of tuples formatted [('postname1','data'),('postname2','data')]
+        """
+        data = self.post("nodes/%s/qemu" % (node), post_data)
+        return data
 		
-	def migrateVirtualMachine(self,node,vmid,target):
-		"""Migrate a virtual machine. Returns JSON"""
-		post_data = [('target', str(target))]
-		data = self.post("nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
-		return data
+    def resetVirtualMachine(self,node,vmid):
+        """Reset a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.post("nodes/%s/qemu/%s/status/reset" % (node,vmid), post_data)
+        return data
 		
-	def monitorVirtualMachine(self,node,vmid,command):
-		"""Send monitor command to a virtual machine. Returns JSON"""
-		post_data = [('command', str(command))]
-		data = self.post("nodes/%s/qemu/%s/monitor" % (node,vmid), post_data)
-		return data
+    def resumeVirtualMachine(self,node,vmid):
+        """Resume a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.post("nodes/%s/qemu/%s/status/resume" % (node,vmid), post_data)
+        return data
 		
-	def vncproxyVirtualMachine(self,node,vmid):
-		"""Creates a VNC Proxy for a virtual machine. Returns JSON"""
-		post_data = None
-		data = self.post("nodes/%s/qemu/%s/vncproxy" % (node,vmid), post_data)
-		return data
+    def shutdownVirtualMachine(self,node,vmid):
+        """Shut down a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.post("nodes/%s/qemu/%s/status/shutdown" % (node,vmid), post_data)
+        return data
+	
+    def startVirtualMachine(self,node,vmid):
+        """Start a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.post("nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
+        return data
+		
+    def stopVirtualMachine(self,node,vmid):
+        """Stop a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.post("nodes/%s/qemu/%s/status/stop" % (node,vmid), post_data)
+        return data
+
+    def suspendVirtualMachine(self,node,vmid):
+        """Suspend a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.post("nodes/%s/qemu/%s/status/suspend" % (node,vmid), post_data)
+        return data
+		
+    def migrateVirtualMachine(self,node,vmid,target):
+        """Migrate a virtual machine. Returns JSON"""
+        post_data = [('target', str(target))]
+        data = self.post("nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
+        return data
+
+    def monitorVirtualMachine(self,node,vmid,command):
+        """Send monitor command to a virtual machine. Returns JSON"""
+        post_data = [('command', str(command))]
+        data = self.post("nodes/%s/qemu/%s/monitor" % (node,vmid), post_data)
+        return data
+		
+    def vncproxyVirtualMachine(self,node,vmid):
+        """Creates a VNC Proxy for a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.post("nodes/%s/qemu/%s/vncproxy" % (node,vmid), post_data)
+        return data
+        
+    """
+    Methods using the DELETE protocol to communicate with the Proxmox API. 
+    """
+    
+    # OPENVZ
+    
+    def deleteOpenvzContainer(self,node,vmid):
+        """Deletes the specified openvz container"""
+        data = self.delete("nodes/%s/openvz/%s" % (node,vmid))
+        return data
+
+    # NODE
+    
+    def deleteNodeNetworkConfig(self,node):
+        """Revert network configuration changes."""
+        data = self.delete("nodes/%s/network" % (node))
+        return data
+    
+    def deleteNodeInterface(self,node,interface):
+        """Delete network device configuration"""
+        data = self.delete("nodes/%s/network/%s" % (node,interface))
+        return data
+    
+    #KVM
+    
+    def deleteVirtualMachine(self,node,vmid):
+        """Destroy the vm (also delete all used/owned volumes)."""
+        data = self.delete("nodes/%s/qemu/%s" % (node,vmid))
+        return data
+        
+    # POOLS
+    def deletePool(self,poolid):
+        """Delete Pool"""
+        data = self.delete("pools/%s" (poolid))
+        return data
+
+    # STORAGE
+    def deleteStorageConfiguration(self,storageid):
+        """Delete storage configuration"""
+        data = self.delete("storage/%s" % (storageid))
+        return data
+
+    """
+    Methods using the PUT protocol to communicate with the Proxmox API. 
+    """
+
+    # NODE
+    def setNodeDNSDomain(self,node,domain):
+        """Set the nodes DNS search domain"""
+        post_data = [('search', str(domain))]
+        data = self.put("nodes/%s/dns" % (node), post_data)
+        return data
+
+    def setNodeSubscriptionKey(self,node,key):
+        """Set the nodes subscription key"""
+        post_data = [('key', str(key))]
+        data = self.put("nodes/%s/subscription" % (node), post_data)
+        return data
+        
+    def setNodeTimeZone(self,node,timezone):
+        """Set the nodes timezone"""
+        post_data = [('timezone', str(timezone))]
+        data = self.put("nodes/%s/time" % (node), post_data)
+        return data
+
+    # OPENVZ
+    def setOpenvzContainerOptions(self,node,vmid,post_data):
+        """Set openvz virtual machine options."""
+        data = self.put("nodes/%s/openvz/%s/config" % (node,vmid), post_data)
+        return data
+    
+    # KVM
+    def setVirtualMachineOptions(self,node,vmide,post_data):
+        """Set KVM virtual machine options."""
+        data = self.put("nodes/%s/qemu/%s/config" % (node,vmid), post_data)
+        return data
+
+    def sendKeyEventVirtualMachine(self,node,vmid, key):
+        """Send key event to virtual machine"""
+        post_data = [('key', str(key))]
+        data = self.put("nodes/%s/qemu/%s/sendkey" % (node,vmid,), post_data)
+        return data
+
+    def unlinkVirtualMachineDiskImage(self,node,vmid, post_data):
+        """Unlink disk images"""
+        data = self.put("nodes/%s/qemu/%s/unlink" % (node,vmid), post_data)
+        return data
+
+    # POOLS
+    def setPoolData(self,poolid, post_data):
+        """Update pool data."""
+        data = self.put("pools/%s" (poolid), post_data)
+        return data
+
+    # STORAGE
+    def updateStorageConfiguration(self,storageid,post_data):
+        """Update storage configuration"""
+        data = self.put("storage/%s" % (storageid), post_data)
+        return data
+
+        
