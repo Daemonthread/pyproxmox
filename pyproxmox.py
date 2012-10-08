@@ -76,6 +76,43 @@ class pyproxmox:
         self.ticket = auth_class.ticket
         self.CSRF = auth_class.CSRF
     
+    def connect(self, conn_type, option, post_data):
+        self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
+    
+        self.response = cStringIO.StringIO()
+
+        self.c = pycurl.Curl()
+        self.c.setopt(pycurl.URL, self.full_url)
+        self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
+        self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
+        self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
+        self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
+
+        if conn_type == "post":
+            self.c.setopt(pycurl.POST, 1)
+        elif conn_type == "put":
+            self.c.setopt(pycurl.CUSTOMREQUEST, 'PUT')
+        elif conn_type == "delete":
+            self.c.setopt(pycurl.CUSTOMREQUEST, 'DELETE')
+        elif conn_type == "get":
+            pass
+
+        if post_data is not None:
+            post_data = urllib.urlencode(post_data)
+            self.c.setopt(pycurl.POSTFIELDS, post_data)
+
+        self.c.setopt(pycurl.COOKIE, "PVEAuthCookie="+str(self.ticket))
+        self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
+        self.c.perform()
+
+        try:
+            self.returned_data = json.loads(self.response.getvalue())
+            return self.returned_data
+        except:
+            print "Error in trying to process JSON"
+            print self.response.getvalue()
+
+
     # GET
     def get(self,option):
         """
@@ -241,7 +278,7 @@ class pyproxmox:
         except:
             print "Error in trying to process JSON"
             print self.response.getvalue()
-    
+
     """
     Methods using the GET protocol to communicate with the Proxmox API.
     """
@@ -249,7 +286,7 @@ class pyproxmox:
     # Cluster Methods
     def getClusterStatus(self):
         """Get cluster status information. Returns JSON"""
-        data = self.get('cluster/status')
+        data = self.connect('get','cluster/status', None)
         return data
 
     def getClusterBackupSchedule(self):
