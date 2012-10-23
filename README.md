@@ -3,6 +3,9 @@ pyproxmox
 
 ## A Python wrapper for the Proxmox 2.x API
 
+###### Install Pycurl
+	sudo apt-get install python-pycurl
+
 ###### Installation using pip
 
 	sudo pip install pyproxmox
