@@ -455,6 +455,19 @@ class pyproxmox:
         post_data = None
         data = self.connect('post',"nodes/%s/qemu/%s/vncproxy" % (node,vmid), post_data)
         return data
+
+    def rollbackVirtualMachine(self,node,vmid,snapname):
+        """Rollback a snapshot of a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.connect('post',"nodes/%s/qemu/%s/snapshot/%s/rollback" % (node,vmid,snapname), post_data)
+        return data
+    
+    def getSnapshotConfigVirtualMachine(self,node,vmid,snapname):
+        """Get snapshot config of a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.connect('get',"nodes/%s/qemu/%s/snapshot/%s/config" % (node,vmid,snapname), post_data)
+        return data
+
         
     """
     Methods using the DELETE protocol to communicate with the Proxmox API. 
