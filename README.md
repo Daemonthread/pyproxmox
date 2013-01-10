@@ -247,6 +247,12 @@ Requires a dictionary of tuples formatted [('postname1','data'),('postname2','da
 		
 		vncproxyVirtualMachine(node,vmid)
 "Creates a VNC Proxy for a virtual machine. Returns JSON"
+
+		rollbackVirtualMachine(node,vmid,snapname)
+"Rollback a snapshot of a virtual machine. Returns JSON"
+
+		getSnapshotConfigVirtualMachine(node,vmid,snapname)
+"Get snapshot config of a virtual machine. Returns JSON"
       
 #### DELETE Methods
     
