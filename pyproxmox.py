@@ -18,47 +18,33 @@ status = b.getClusterStatus('vnode01')
 
 For more information see https://github.com/Daemonthread/pyproxmox.
 """
-import pycurl
-import urllib
-import cStringIO
 import json
+import requests
 
 # Authentication class
 class prox_auth:
-	"""
-	The authentication class, requires three strings:
-	
-	1. An IP/resolvable url (minus the https://)
-	2. Valid username, including the @pve or @pam
-	3. A password
-	
-	Creates the required ticket and CSRF prevention token for future connections.
-	
-	Designed to be instanciated then passed to the new pyproxmox class as an init parameter.
-	"""
-	def __init__(self,url,username,password):
-		self.url = url
-        
-		self.connect_data = "username=%s&password=%s" % (username,password)
-		self.full_url = "https://%s:8006/api2/json/access/ticket" % (self.url)
-
-		self.response = cStringIO.StringIO()
+    """
+    The authentication class, requires three strings:
     
-		self.c = pycurl.Curl()
-		self.c.setopt(pycurl.URL, self.full_url)
-		self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
-		self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
-		self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
-		self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
-		self.c.setopt(pycurl.POST, 1)
-		self.c.setopt(pycurl.POSTFIELDS, self.connect_data)
-		self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
-		self.c.perform()
+    1. An IP/resolvable url (minus the https://)
+    2. Valid username, including the @pve or @pam
+    3. A password
+    
+    Creates the required ticket and CSRF prevention token for future connections.
+    
+    Designed to be instanciated then passed to the new pyproxmox class as an init parameter.
+    """
+    def __init__(self,url,username,password):
+        self.url = url
+        self.connect_data = { "username":username, "password":password }
+        self.full_url = "https://%s:8006/api2/json/access/ticket" % (self.url)
 
-		self.returned_data = json.loads(self.response.getvalue())
+        self.response = requests.post(self.full_url,verify=False,data=self.connect_data)
+    
+        self.returned_data = self.response.json()
         
-		self.ticket = self.returned_data['data']['ticket']
-		self.CSRF = self.returned_data['data']['CSRFPreventionToken']
+        self.ticket = {'PVEAuthCookie':self.returned_data['data']['ticket']}
+        self.CSRF = self.returned_data['data']['CSRFPreventionToken']
 
 # The meat and veg class
 class pyproxmox:
@@ -78,45 +64,42 @@ class pyproxmox:
     
     def connect(self, conn_type, option, post_data):
         """
-        The main communication method. Creates a pycurl instance with the appropriate parameters.
+        The main communication method.
         """
         self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
     
-        self.response = cStringIO.StringIO()
-
-        self.c = pycurl.Curl()
-        self.c.setopt(pycurl.URL, self.full_url)
-        self.c.setopt(pycurl.HTTPHEADER, ['Accept: application/json'])
-        self.c.setopt(pycurl.HTTPHEADER, ['Content-Type : application/x-www-form-urlencoded'])
-        self.c.setopt(pycurl.SSL_VERIFYHOST, 0)
-        self.c.setopt(pycurl.SSL_VERIFYPEER, 0)
+        httpheaders = {'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'}
 
         if conn_type == "post":
-            self.c.setopt(pycurl.POST, 1)
+            httpheaders['CSRFPreventionToken'] = str(self.CSRF)
+            self.response = requests.post(self.full_url, verify=False, 
+                                          params = post_data, 
+                                          cookies = self.ticket,
+                                          headers = httpheaders)
+
         elif conn_type == "put":
-            self.c.setopt(pycurl.CUSTOMREQUEST, 'PUT')
+            httpheaders['CSRFPreventionToken'] = str(self.CSRF)
+            self.response = requests.put(self.full_url, verify=False, 
+                                          params = post_data, 
+                                          cookies = self.ticket,
+                                          headers = httpheaders)
         elif conn_type == "delete":
-            self.c.setopt(pycurl.CUSTOMREQUEST, 'DELETE')
+            httpheaders['CSRFPreventionToken'] = str(self.CSRF)
+            self.response = requests.delete(self.full_url, verify=False, 
+                                          params = post_data, 
+                                          cookies = self.ticket,
+                                          headers = httpheaders)
         elif conn_type == "get":
-            pass
-
-        if conn_type is not "get":
-            self.c.setopt(pycurl.HTTPHEADER, ['CSRFPreventionToken:'+str(self.CSRF)])
-
-        if post_data is not None:
-            post_data = urllib.urlencode(post_data)
-            self.c.setopt(pycurl.POSTFIELDS, post_data)
-
-        self.c.setopt(pycurl.COOKIE, "PVEAuthCookie="+str(self.ticket))
-        self.c.setopt(pycurl.WRITEFUNCTION, self.response.write)
-        self.c.perform()
+            self.response = requests.get (self.full_url, verify=False, 
+                                          params = post_data, 
+                                          cookies = self.ticket)
 
         try:
-            self.returned_data = json.loads(self.response.getvalue())
+            self.returned_data = self.response.json()
             return self.returned_data
         except:
-            print "Error in trying to process JSON"
-            print self.response.getvalue()
+            print("Error in trying to process JSON")
+            print(self.response)
 
 
     """
@@ -345,9 +328,9 @@ class pyproxmox:
     """
     Methods using the POST protocol to communicate with the Proxmox API. 
     """
-	
+    
     # OpenVZ Methods
-	
+    
     def createOpenvzContainer(self,node,post_data):
         """
         Create or restore a container. Returns JSON
@@ -388,7 +371,7 @@ class pyproxmox:
 
     def migrateOpenvzContainer(self,node,vmid,target):
         """Migrate the container to another node. Creates a new migration task. Returns JSON"""
-        post_data = [('target', str(target))]
+        post_data = {'target', str(target)}
         data = self.connect('post','nodes/%s/openvz/%s/migrate' % (node,vmid), post_data)
         return data
 
@@ -401,31 +384,31 @@ class pyproxmox:
         """
         data = self.connect('post',"nodes/%s/qemu" % (node), post_data)
         return data
-		
+        
     def resetVirtualMachine(self,node,vmid):
         """Reset a virtual machine. Returns JSON"""
         post_data = None
         data = self.connect('post',"nodes/%s/qemu/%s/status/reset" % (node,vmid), post_data)
         return data
-		
+        
     def resumeVirtualMachine(self,node,vmid):
         """Resume a virtual machine. Returns JSON"""
         post_data = None
         data = self.connect('post',"nodes/%s/qemu/%s/status/resume" % (node,vmid), post_data)
         return data
-		
+        
     def shutdownVirtualMachine(self,node,vmid):
         """Shut down a virtual machine. Returns JSON"""
         post_data = None
         data = self.connect('post',"nodes/%s/qemu/%s/status/shutdown" % (node,vmid), post_data)
         return data
-	
+    
     def startVirtualMachine(self,node,vmid):
         """Start a virtual machine. Returns JSON"""
         post_data = None
         data = self.connect('post',"nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
         return data
-		
+        
     def stopVirtualMachine(self,node,vmid):
         """Stop a virtual machine. Returns JSON"""
         post_data = None
@@ -437,19 +420,19 @@ class pyproxmox:
         post_data = None
         data = self.connect('post',"nodes/%s/qemu/%s/status/suspend" % (node,vmid), post_data)
         return data
-		
+        
     def migrateVirtualMachine(self,node,vmid,target):
         """Migrate a virtual machine. Returns JSON"""
-        post_data = [('target', str(target))]
+        post_data = {'target', str(target)}
         data = self.connect('post',"nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
         return data
 
     def monitorVirtualMachine(self,node,vmid,command):
         """Send monitor command to a virtual machine. Returns JSON"""
-        post_data = [('command', str(command))]
+        post_data = {'command', str(command)}
         data = self.connect('post',"nodes/%s/qemu/%s/monitor" % (node,vmid), post_data)
         return data
-		
+        
     def vncproxyVirtualMachine(self,node,vmid):
         """Creates a VNC Proxy for a virtual machine. Returns JSON"""
         post_data = None
@@ -518,19 +501,19 @@ class pyproxmox:
     # NODE
     def setNodeDNSDomain(self,node,domain):
         """Set the nodes DNS search domain"""
-        post_data = [('search', str(domain))]
+        post_data = {'search', str(domain)}
         data = self.connect('put',"nodes/%s/dns" % (node), post_data)
         return data
 
     def setNodeSubscriptionKey(self,node,key):
         """Set the nodes subscription key"""
-        post_data = [('key', str(key))]
+        post_data = {'key', str(key)}
         data = self.connect('put',"nodes/%s/subscription" % (node), post_data)
         return data
         
     def setNodeTimeZone(self,node,timezone):
         """Set the nodes timezone"""
-        post_data = [('timezone', str(timezone))]
+        post_data = {'timezone', str(timezone)}
         data = self.connect('put',"nodes/%s/time" % (node), post_data)
         return data
 
@@ -548,7 +531,7 @@ class pyproxmox:
 
     def sendKeyEventVirtualMachine(self,node,vmid, key):
         """Send key event to virtual machine"""
-        post_data = [('key', str(key))]
+        post_data = {'key', str(key)}
         data = self.connect('put',"nodes/%s/qemu/%s/sendkey" % (node,vmid,), post_data)
         return data
 
