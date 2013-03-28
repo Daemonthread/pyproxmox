@@ -73,20 +73,20 @@ class pyproxmox:
         if conn_type == "post":
             httpheaders['CSRFPreventionToken'] = str(self.CSRF)
             self.response = requests.post(self.full_url, verify=False, 
-                                          params = post_data, 
+                                          data = post_data, 
                                           cookies = self.ticket,
                                           headers = httpheaders)
 
         elif conn_type == "put":
             httpheaders['CSRFPreventionToken'] = str(self.CSRF)
             self.response = requests.put(self.full_url, verify=False, 
-                                          params = post_data, 
+                                          data = post_data, 
                                           cookies = self.ticket,
                                           headers = httpheaders)
         elif conn_type == "delete":
             httpheaders['CSRFPreventionToken'] = str(self.CSRF)
             self.response = requests.delete(self.full_url, verify=False, 
-                                          params = post_data, 
+                                          data = post_data, 
                                           cookies = self.ticket,
                                           headers = httpheaders)
         elif conn_type == "get":
@@ -532,7 +532,7 @@ class pyproxmox:
     def sendKeyEventVirtualMachine(self,node,vmid, key):
         """Send key event to virtual machine"""
         post_data = {'key', str(key)}
-        data = self.connect('put',"nodes/%s/qemu/%s/sendkey" % (node,vmid,), post_data)
+        data = self.connect('put',"nodes/%s/qemu/%s/sendkey" % (node,vmid), post_data)
         return data
 
     def unlinkVirtualMachineDiskImage(self,node,vmid, post_data):
