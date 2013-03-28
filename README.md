@@ -3,9 +3,9 @@ pyproxmox
 
 ## A Python wrapper for the Proxmox 2.x API
 
-This is a fork from https//github.com/Daemonthread/pyproxmox
-
-First work is to replace pycurl with requests module.
+### Installation
+    
+    sudo pip install pyproxmox
 
 ###### Example usage
 
