@@ -527,7 +527,7 @@ class pyproxmox:
         return data
     
     # KVM
-    def setVirtualMachineOptions(self,node,vmide,post_data):
+    def setVirtualMachineOptions(self,node,vmid,post_data):
         """Set KVM virtual machine options."""
         data = self.connect('put',"nodes/%s/qemu/%s/config" % (node,vmid), post_data)
         return data
