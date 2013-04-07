@@ -117,6 +117,10 @@ class pyproxmox:
         data = self.connect('get','cluster/backup',None)
         return data
 
+    def getClusterVmNextId(self):
+        """Get next VM ID of cluster. Returns JSON"""
+        data = self.connect('get','cluster/nextid',None)
+        return data
 
 
     # Node Methods

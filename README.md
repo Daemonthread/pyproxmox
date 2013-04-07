@@ -56,6 +56,9 @@ For more information on the accepted variables please see http//pve.proxmox.com/
 		getClusterBackupSchedule()
 "List vzdump backup schedule. Returns JSON"
 
+      getClusterVmNextId()
+"Get next VM ID of cluster. Returns JSON"
+
 ##### Node Methods
 		getNodeNetworks(node)
 "List available networks. Returns JSON"
