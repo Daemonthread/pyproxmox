@@ -91,7 +91,6 @@ class pyproxmox:
                                           headers = httpheaders)
         elif conn_type == "get":
             self.response = requests.get (self.full_url, verify=False, 
-                                          params = post_data, 
                                           cookies = self.ticket)
 
         try:
@@ -375,7 +374,7 @@ class pyproxmox:
 
     def migrateOpenvzContainer(self,node,vmid,target):
         """Migrate the container to another node. Creates a new migration task. Returns JSON"""
-        post_data = {'target', str(target)}
+        post_data = {'target': str(target)}
         data = self.connect('post','nodes/%s/openvz/%s/migrate' % (node,vmid), post_data)
         return data
 
@@ -427,13 +426,13 @@ class pyproxmox:
         
     def migrateVirtualMachine(self,node,vmid,target):
         """Migrate a virtual machine. Returns JSON"""
-        post_data = {'target', str(target)}
+        post_data = {'target': str(target)}
         data = self.connect('post',"nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
         return data
 
     def monitorVirtualMachine(self,node,vmid,command):
         """Send monitor command to a virtual machine. Returns JSON"""
-        post_data = {'command', str(command)}
+        post_data = {'command': str(command)}
         data = self.connect('post',"nodes/%s/qemu/%s/monitor" % (node,vmid), post_data)
         return data
         
@@ -505,19 +504,19 @@ class pyproxmox:
     # NODE
     def setNodeDNSDomain(self,node,domain):
         """Set the nodes DNS search domain"""
-        post_data = {'search', str(domain)}
+        post_data = {'search': str(domain)}
         data = self.connect('put',"nodes/%s/dns" % (node), post_data)
         return data
 
     def setNodeSubscriptionKey(self,node,key):
         """Set the nodes subscription key"""
-        post_data = {'key', str(key)}
+        post_data = {'key': str(key)}
         data = self.connect('put',"nodes/%s/subscription" % (node), post_data)
         return data
         
     def setNodeTimeZone(self,node,timezone):
         """Set the nodes timezone"""
-        post_data = {'timezone', str(timezone)}
+        post_data = {'timezone': str(timezone)}
         data = self.connect('put',"nodes/%s/time" % (node), post_data)
         return data
 
@@ -535,7 +534,7 @@ class pyproxmox:
 
     def sendKeyEventVirtualMachine(self,node,vmid, key):
         """Send key event to virtual machine"""
-        post_data = {'key', str(key)}
+        post_data = {'key': str(key)}
         data = self.connect('put',"nodes/%s/qemu/%s/sendkey" % (node,vmid), post_data)
         return data
 
