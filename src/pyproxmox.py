@@ -388,6 +388,14 @@ class pyproxmox:
         data = self.connect('post',"nodes/%s/qemu" % (node), post_data)
         return data
         
+    def cloneVirtualMachine(self,node,vmid,post_data):
+        """
+        Create a copy of virtual machine/template
+        Requires a dictionary of tuples formatted [('postname1','data'),('postname2','data')]
+        """
+        data = self.connect('post',"nodes/%s/qemu/%s/clone" % (node,vmid), post_data)
+        return data
+        
     def resetVirtualMachine(self,node,vmid):
         """Reset a virtual machine. Returns JSON"""
         post_data = None

@@ -221,6 +221,10 @@ Requires a dictionary of tuples formatted [('postname1','data'),('postname2','da
 "Create or restore a virtual machine. Returns JSON
 Requires a dictionary of tuples formatted [('postname1','data'),('postname2','data')]"
 		
+		cloneVirtualMachine(node,vmid,post_data)
+"Create a copy of virtual machine/template. Returns JSON
+Requires a dictionary of tuples formatted [('postname1','data'),('postname2','data')]"
+		
 		resetVirtualMachine(node,vmid)
 "Reset a virtual machine. Returns JSON"
 		
