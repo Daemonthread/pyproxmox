@@ -36,7 +36,7 @@ These methods need to passed a correctly formatted dictionary.
 for example, if I was to use the createOpenvzContainer for the above example node
 I would need to pass the post_data with all the required variables for proxmox.
 
-	post_data = {'ostemplate':'localvztmpl/debian-6.0-standard_6.0-4_amd64.tar.gz',
+	post_data = {'ostemplate':'local:vztmpl/debian-6.0-standard_6.0-4_amd64.tar.gz',
 				'vmid':'9001','cpus':'4','description':'test container',
 				'disk':'10','hostname':'test.example.org','memory':'1024',
 				'password':'testPassword','swap':'1024'}
