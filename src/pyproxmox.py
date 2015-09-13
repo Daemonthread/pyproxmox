@@ -432,10 +432,14 @@ class pyproxmox:
         data = self.connect('post',"nodes/%s/qemu/%s/status/suspend" % (node,vmid), post_data)
         return data
         
-    def migrateVirtualMachine(self,node,vmid,target):
+    def migrateVirtualMachine(self,node,vmid,target,online=False,force=False):
         """Migrate a virtual machine. Returns JSON"""
         post_data = {'target': str(target)}
-        data = self.connect('post',"nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
+        if online:
+            post_data['online'] = '1'
+        if force:
+            post_data['force'] = '1'
+        data = self.connect('post',"nodes/%s/qemu/%s/migrate" % (node,vmid), post_data)
         return data
 
     def monitorVirtualMachine(self,node,vmid,command):
