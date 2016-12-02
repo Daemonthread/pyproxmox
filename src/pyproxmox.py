@@ -20,6 +20,7 @@ For more information see https://github.com/Daemonthread/pyproxmox.
 """
 import json
 import requests
+import sys
 
 # Authentication class
 class prox_auth:
@@ -39,9 +40,20 @@ class prox_auth:
         self.connect_data = { "username":username, "password":password }
         self.full_url = "https://%s:8006/api2/json/access/ticket" % (self.url)
 
+        self.setup_connection()
+
+    def setup_connection(self):
+        self.ticket = ""
+        self.CSRF = ""
+
         self.response = requests.post(self.full_url,verify=False,data=self.connect_data)
+        result = self.response
     
-        self.returned_data = self.response.json()
+        if not self.response.ok:
+            raise AssertionError('Authentification Error: HTTP Result: \n {}'.format(self.response))
+
+        self.returned_data={'status': {'code': self.response.status_code, 'ok': self.response.ok, 'reason': self.response.reason}}
+        self.returned_data.update(result.json())
         
         self.ticket = {'PVEAuthCookie':self.returned_data['data']['ticket']}
         self.CSRF = self.returned_data['data']['CSRFPreventionToken']
@@ -58,9 +70,13 @@ class pyproxmox:
     # INIT
     def __init__(self, auth_class):
         """Take the prox_auth instance and extract the important stuff"""
-        self.url = auth_class.url
-        self.ticket = auth_class.ticket
-        self.CSRF = auth_class.CSRF
+        self.auth_class = auth_class
+        self.get_auth_data()
+
+    def get_auth_data(self,):
+        self.url = self.auth_class.url
+        self.ticket = self.auth_class.ticket
+        self.CSRF = self.auth_class.CSRF
     
     def connect(self, conn_type, option, post_data):
         """
@@ -69,7 +85,7 @@ class pyproxmox:
         self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
     
         httpheaders = {'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'}
-
+        requests.packages.urllib3.disable_warnings()
         if conn_type == "post":
             httpheaders['CSRFPreventionToken'] = str(self.CSRF)
             self.response = requests.post(self.full_url, verify=False, 
@@ -95,10 +111,17 @@ class pyproxmox:
 
         try:
             self.returned_data = self.response.json()
+            self.returned_data.update({'status':{'code':self.response.status_code,'ok':self.response.ok,'reason':self.response.reason}})
             return self.returned_data
         except:
             print("Error in trying to process JSON")
             print(self.response)
+            if self.response.status_code==401 and (not sys._getframe(1).f_code.co_name == sys._getframe(0).f_code.co_name):
+                print "Unexpected error: %s : %s" % (str(sys.exc_info()[0]), str(sys.exc_info()[1]))
+                print "try to recover connection auth"
+                self.auth_class.setup_connection()
+                self.get_auth_data()
+                return self.connect(conn_type, option, post_data)
 
 
     """
