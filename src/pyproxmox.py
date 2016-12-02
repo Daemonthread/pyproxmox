@@ -456,7 +456,15 @@ class pyproxmox:
         return data
     
     def startVirtualMachine(self,node,vmid):
-        """Start a virtual machine. Returns JSON"""
+        """Start a virtual machine. Returns JSON
+         :param     node:    node name
+         :param     vmid:    vm id (e.g. 167)
+         :type      node:       str
+         :type      vmid:       int
+         :return:   {   'status':        { 'code': http returncode, 'reason': http return string, 'ok': return status }
+                        'data':          { 'task String (UPID)'}
+         :rtype     dict
+        """
         post_data = None
         data = self.connect('post',"nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
         return data
@@ -582,7 +590,7 @@ class pyproxmox:
     # POOLS
     def deletePool(self,poolid):
         """Delete Pool"""
-        data = self.connect('delete',"pools/%s" (poolid),None)
+        data = self.connect('delete',"pools/%s" % (poolid),None)
         return data
 
     # STORAGE
