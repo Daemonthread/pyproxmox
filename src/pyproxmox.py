@@ -324,9 +324,12 @@ class pyproxmox:
         data = self.connect('get','nodes/%s/qemu/%s/status/current' % (node,vmid),None)
         return data
 
-    def getVirtualConfig(self,node,vmid):
+    def getVirtualConfig(self,node,vmid,current=False):
         """Get virtual machine configuration. Returns JSON"""
-        data = self.connect('get','nodes/%s/qemu/%s/config' % (node,vmid),None)
+        if current:
+            data = self.connect('get','nodes/%s/qemu/%s/config' % (node,vmid),None)
+        else:
+            data = self.connect('get','nodes/%s/qemu/%s/config' % (node,vmid),current)
         return data
 
     def getVirtualRRD(self,node,vmid):
@@ -504,6 +507,37 @@ class pyproxmox:
         data = self.connect('get',"nodes/%s/qemu/%s/snapshot/%s/config" % (node,vmid,snapname), post_data)
         return data
 
+    def getSnapshotsVirtualMachine(self,node,vmid):
+        """Get list of snapshots a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.connect('get',"nodes/%s/qemu/%s/snapshot" % (node,vmid), post_data)
+        if type(data['data']) is list:
+            try:
+                #data['data'].remove([s for s in data['data'] if s['name']=='current'])
+                for s in data['data'][:]:
+                    if s['name']=='current':
+                        data['data'].remove(s)
+            except :
+                import sys
+                print("Unexpected error:", sys.exc_info()[0])
+
+        return data
+
+    def createSnapshotVirtualMachine(self,node,vmid,snapname,description='',vmstate=False):
+        """
+        create Snapshot from VM
+        :param node: name of the node
+        :param vmid: id of the vm
+        :param snapname: title of the snapshot
+        :param description: snapshot description
+        :param vmstate: set if vmstatus should be saved too (useful for running vms)
+        :return: dictionary with rest result and returned data
+        """
+        if vmstate==True: vmstate=0
+        else: vmstate=1
+        post_data = { 'snapname': snapname ,'description':description,'vmstate':vmstate}
+        data = self.connect('post',"nodes/%s/qemu/%s/snapshot" % (node,vmid), post_data)
+        return data
         
     """
     Methods using the DELETE protocol to communicate with the Proxmox API. 
@@ -535,6 +569,16 @@ class pyproxmox:
         data = self.connect('delete',"nodes/%s/qemu/%s" % (node,vmid),None)
         return data
         
+    def deleteSnapshotVirtualMachine(self,node,vmid,title,force=False):
+        """Destroy the vm snapshot (also delete all used/owned volumes).
+           :param force: (Boolean) For removal from config file, even if removing disk snapshots fails. """
+        post_data=None
+        if force:
+            post_data={}
+            post_data['force'] = '1'
+        data = self.connect('delete',"nodes/%s/qemu/%s/snapshot/%s" % (node,vmid,title),post_data)
+        return data
+
     # POOLS
     def deletePool(self,poolid):
         """Delete Pool"""
