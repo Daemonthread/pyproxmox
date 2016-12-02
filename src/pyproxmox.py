@@ -144,6 +144,15 @@ class pyproxmox:
         data = self.connect('get','cluster/nextid',None)
         return data
 
+    def getClusterNodeList(self):
+        """Node list. Returns JSON"""
+        data = self.connect('get','nodes/',None)
+        return data
+
+    def getClusterLog(self):
+        """log from Cluster"""
+        data = self.connect('get','cluster/log',None)
+        return data
 
     # Node Methods
     def getNodeNetworks(self,node):
@@ -258,6 +267,12 @@ class pyproxmox:
         data = self.connect('get','nodes/%s/scan/usb' % (node),None)
         return data
 
+    # Access
+
+    def getClusterACL(self):
+        """log from Cluster"""
+        data = self.connect('get','access/acl',None)
+        return data
 
     
     # OpenVZ Methods
