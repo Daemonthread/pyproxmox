@@ -20,6 +20,7 @@ For more information see https://github.com/Daemonthread/pyproxmox.
 """
 import json
 import requests
+import sys
 
 # Authentication class
 class prox_auth:
@@ -39,9 +40,20 @@ class prox_auth:
         self.connect_data = { "username":username, "password":password }
         self.full_url = "https://%s:8006/api2/json/access/ticket" % (self.url)
 
+        self.setup_connection()
+
+    def setup_connection(self):
+        self.ticket = ""
+        self.CSRF = ""
+
         self.response = requests.post(self.full_url,verify=False,data=self.connect_data)
+        result = self.response
     
-        self.returned_data = self.response.json()
+        if not self.response.ok:
+            raise AssertionError('Authentification Error: HTTP Result: \n {}'.format(self.response))
+
+        self.returned_data={'status': {'code': self.response.status_code, 'ok': self.response.ok, 'reason': self.response.reason}}
+        self.returned_data.update(result.json())
         
         self.ticket = {'PVEAuthCookie':self.returned_data['data']['ticket']}
         self.CSRF = self.returned_data['data']['CSRFPreventionToken']
@@ -58,9 +70,13 @@ class pyproxmox:
     # INIT
     def __init__(self, auth_class):
         """Take the prox_auth instance and extract the important stuff"""
-        self.url = auth_class.url
-        self.ticket = auth_class.ticket
-        self.CSRF = auth_class.CSRF
+        self.auth_class = auth_class
+        self.get_auth_data()
+
+    def get_auth_data(self,):
+        self.url = self.auth_class.url
+        self.ticket = self.auth_class.ticket
+        self.CSRF = self.auth_class.CSRF
     
     def connect(self, conn_type, option, post_data):
         """
@@ -69,7 +85,7 @@ class pyproxmox:
         self.full_url = "https://%s:8006/api2/json/%s" % (self.url,option)
     
         httpheaders = {'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'}
-
+        requests.packages.urllib3.disable_warnings()
         if conn_type == "post":
             httpheaders['CSRFPreventionToken'] = str(self.CSRF)
             self.response = requests.post(self.full_url, verify=False, 
@@ -95,10 +111,17 @@ class pyproxmox:
 
         try:
             self.returned_data = self.response.json()
+            self.returned_data.update({'status':{'code':self.response.status_code,'ok':self.response.ok,'reason':self.response.reason}})
             return self.returned_data
         except:
             print("Error in trying to process JSON")
             print(self.response)
+            if self.response.status_code==401 and (not sys._getframe(1).f_code.co_name == sys._getframe(0).f_code.co_name):
+                print "Unexpected error: %s : %s" % (str(sys.exc_info()[0]), str(sys.exc_info()[1]))
+                print "try to recover connection auth"
+                self.auth_class.setup_connection()
+                self.get_auth_data()
+                return self.connect(conn_type, option, post_data)
 
 
     """
@@ -121,6 +144,15 @@ class pyproxmox:
         data = self.connect('get','cluster/nextid',None)
         return data
 
+    def getClusterNodeList(self):
+        """Node list. Returns JSON"""
+        data = self.connect('get','nodes/',None)
+        return data
+
+    def getClusterLog(self):
+        """log from Cluster"""
+        data = self.connect('get','cluster/log',None)
+        return data
 
     # Node Methods
     def getNodeNetworks(self,node):
@@ -235,6 +267,12 @@ class pyproxmox:
         data = self.connect('get','nodes/%s/scan/usb' % (node),None)
         return data
 
+    # Access
+
+    def getClusterACL(self):
+        """log from Cluster"""
+        data = self.connect('get','access/acl',None)
+        return data
 
     
     # OpenVZ Methods
@@ -286,9 +324,12 @@ class pyproxmox:
         data = self.connect('get','nodes/%s/qemu/%s/status/current' % (node,vmid),None)
         return data
 
-    def getVirtualConfig(self,node,vmid):
+    def getVirtualConfig(self,node,vmid,current=False):
         """Get virtual machine configuration. Returns JSON"""
-        data = self.connect('get','nodes/%s/qemu/%s/config' % (node,vmid),None)
+        if current:
+            data = self.connect('get','nodes/%s/qemu/%s/config' % (node,vmid),None)
+        else:
+            data = self.connect('get','nodes/%s/qemu/%s/config' % (node,vmid),current)
         return data
 
     def getVirtualRRD(self,node,vmid):
@@ -415,7 +456,15 @@ class pyproxmox:
         return data
     
     def startVirtualMachine(self,node,vmid):
-        """Start a virtual machine. Returns JSON"""
+        """Start a virtual machine. Returns JSON
+         :param     node:    node name
+         :param     vmid:    vm id (e.g. 167)
+         :type      node:       str
+         :type      vmid:       int
+         :return:   {   'status':        { 'code': http returncode, 'reason': http return string, 'ok': return status }
+                        'data':          { 'task String (UPID)'}
+         :rtype     dict
+        """
         post_data = None
         data = self.connect('post',"nodes/%s/qemu/%s/status/start" % (node,vmid), post_data)
         return data
@@ -466,6 +515,37 @@ class pyproxmox:
         data = self.connect('get',"nodes/%s/qemu/%s/snapshot/%s/config" % (node,vmid,snapname), post_data)
         return data
 
+    def getSnapshotsVirtualMachine(self,node,vmid):
+        """Get list of snapshots a virtual machine. Returns JSON"""
+        post_data = None
+        data = self.connect('get',"nodes/%s/qemu/%s/snapshot" % (node,vmid), post_data)
+        if type(data['data']) is list:
+            try:
+                #data['data'].remove([s for s in data['data'] if s['name']=='current'])
+                for s in data['data'][:]:
+                    if s['name']=='current':
+                        data['data'].remove(s)
+            except :
+                import sys
+                print("Unexpected error:", sys.exc_info()[0])
+
+        return data
+
+    def createSnapshotVirtualMachine(self,node,vmid,snapname,description='',vmstate=False):
+        """
+        create Snapshot from VM
+        :param node: name of the node
+        :param vmid: id of the vm
+        :param snapname: title of the snapshot
+        :param description: snapshot description
+        :param vmstate: set if vmstatus should be saved too (useful for running vms)
+        :return: dictionary with rest result and returned data
+        """
+        if vmstate==True: vmstate=0
+        else: vmstate=1
+        post_data = { 'snapname': snapname ,'description':description,'vmstate':vmstate}
+        data = self.connect('post',"nodes/%s/qemu/%s/snapshot" % (node,vmid), post_data)
+        return data
         
     """
     Methods using the DELETE protocol to communicate with the Proxmox API. 
@@ -497,10 +577,20 @@ class pyproxmox:
         data = self.connect('delete',"nodes/%s/qemu/%s" % (node,vmid),None)
         return data
         
+    def deleteSnapshotVirtualMachine(self,node,vmid,title,force=False):
+        """Destroy the vm snapshot (also delete all used/owned volumes).
+           :param force: (Boolean) For removal from config file, even if removing disk snapshots fails. """
+        post_data=None
+        if force:
+            post_data={}
+            post_data['force'] = '1'
+        data = self.connect('delete',"nodes/%s/qemu/%s/snapshot/%s" % (node,vmid,title),post_data)
+        return data
+
     # POOLS
     def deletePool(self,poolid):
         """Delete Pool"""
-        data = self.connect('delete',"pools/%s" (poolid),None)
+        data = self.connect('delete',"pools/%s" % (poolid),None)
         return data
 
     # STORAGE
