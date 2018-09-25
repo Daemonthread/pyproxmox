@@ -3,6 +3,8 @@ pyproxmox
 
 ## A Python wrapper for the Proxmox 2.x API
 
+# This project and repository is now archived and unsupported. Please think about using a different library that supports the more modern versions of proxmox.
+
 ### Installation and dependency
     
     sudo pip install pyproxmox requests
